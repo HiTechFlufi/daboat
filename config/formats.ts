@@ -2367,6 +2367,31 @@ export const Formats: import('../sim/dex-formats').FormatList = [
 			this.add('message', 'EVERYONE IS HERE!');
 			this.add('message', 'FIGHT!');
 		},
+		getSharedItems(pokemon) {
+			if (pokemon.item && pokemon.getItem().id === 'colossuscarrier' && pokemon.abilityState.carrierItems) {
+				const items = new Set<string>();
+				for (const baggedItem of pokemon.abilityState.carrierItems) {
+					if (items.has(baggedItem)) continue;
+					items.add(baggedItem);
+				}
+				if (items.has(pokemon.item)) items.delete(pokemon.item);
+				return items;
+			}
+		},
+		onBeforeSwitchIn(pokemon) {
+			if (pokemon.item && pokemon.getItem().id === 'colossuscarrier' && pokemon.abilityState.carrierItems) {
+				let format = this.format;
+				if (!format.getSharedItems) format = this.dex.formats.get('gen9superstaffbrosultimate');
+				if (!pokemon.m.sharedItemsUsed) pokemon.m.sharedItemsUsed = [];
+				for (const item of format.getSharedItems!(pokemon)) {
+					if (pokemon.m.sharedItemsUsed.includes(item)) continue;
+					const effect = 'item:' + item;
+					pokemon.volatiles[effect] = {id: this.toID(effect), target: pokemon};
+					if (!pokemon.m.items) pokemon.m.items = [];
+					if (!pokemon.m.items.includes(effect)) pokemon.m.items.push(effect);
+				}
+			}
+		},
 		onSwitchInPriority: 100,
 		onSwitchIn(pokemon) {
 			let name: string = this.toID(pokemon.illusion ? pokemon.illusion.name : pokemon.name);
@@ -2388,6 +2413,18 @@ export const Formats: import('../sim/dex-formats').FormatList = [
 				this.dex.forGen(9).species.get((pokemon.illusion || pokemon).species.name).types.join('/') &&
 				!pokemon.terastallized) {
 				this.add('-start', pokemon, 'typechange', (pokemon.illusion || pokemon).getTypes(true).join('/'), '[silent]');
+			}
+
+			// Handling Colossus Carrier
+			if (pokemon.item && pokemon.getItem().id === 'colossuscarrier' && pokemon.abilityState.carrierItems) {
+				let format = this.format;
+				if (!format.getSharedItems) format = this.dex.formats.get('gen9superstaffbrosultimate');
+				for (const item of format.getSharedItems!(pokemon)) {
+					if (pokemon.m.sharedItemsUsed.includes(item)) continue;
+					const effect = 'item:' + item;
+					delete pokemon.volatiles[effect];
+					pokemon.addVolatile(effect);
+				}
 			}
 		},
 	},
