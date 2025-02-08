@@ -1,4 +1,50 @@
 export const Items: { [k: string]: ModdedItemData } = {
+	// Gadget
+	everythingamajig: {
+		name: "Everythingamajig",
+		gen: 9,
+		desc: "Upon switching in, copies the foe's item, replacing Everythingamajig. Reverts back to Everythingamajig upon switching out. If no active foes have a held item upon switching in, Everythingamajig explodes; Holder loses 1/3 max HP.",
+		shortDesc: "Copies the foe's item until the holder switches.",
+		onStart(pokemon) {
+			if (!pokemon.volatiles['everythingamajig']) pokemon.addVolatile('everythingamajig');
+		},
+		onSwitchOut(pokemon) {
+			if (pokemon.volatiles['everythingamajig']) pokemon.removeVolatile('everythingamajig');
+		},
+		condition: {
+			onStart(pokemon) {
+				let myItem = false;
+				let success = false;
+				for (const target of pokemon.side.foe.active) {
+					if (target.item) {
+						success = true;
+						myItem = target.getItem();
+					}
+				}
+				if (!myItem) success = false;
+				if (!success) {
+					this.add('-message', `Everythingamajig couldn't find an identity and seized up!`);
+					this.add('-anim', pokemon, 'Explosion', pokemon);
+					this.add('-anim', pokemon, 'Tickle', pokemon);
+					this.damage(pokemon.maxhp / 3);
+					this.add('-enditem', pokemon, 'Everythingamajig');
+					pokemon.clearItem();
+					return;
+				}
+				this.add('-activate', pokemon, 'item: Everythingamajig');
+				pokemon.item = myItem.id;
+				pokemon.setItem(myItem);
+				this.add('-message', `Everythingamajig transformed into ${myItem.name}!`);
+			},
+			onEnd(pokemon) {
+				if (!pokemon.item) return;
+				let myItem = this.dex.items.get('everythingamajig');
+				pokemon.item = myItem.id;
+				pokemon.setItem(myItem);
+				this.add('-message', `(Everythingamajig deactivated!)`);
+			},
+		},
+	},
 	// Mink
 	corpselily: {
 		name: "Corpse Lily",
