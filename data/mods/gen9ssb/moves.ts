@@ -2802,7 +2802,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		onPrepareHit(target, source) {
 			if (!source.abilityState.coins) return;
 			this.add('-anim', source, 'Taunt', target);
-			this.add('-anim', source, 'Make It Rain', target);
+			this.add('-anim', source, 'Steel Beam', target);
 			this.add('-message', `${source.name} consumed all its coins to power up Capital Cannon!`);
 		},
 		basePowerCallback(pokemon, target, move) {
