@@ -477,7 +477,7 @@ export const Items: { [k: string]: ModdedItemData } = {
 		gen: 9,
 		onStart(pokemon) {
 			const target = pokemon.side.foe.active[pokemon.side.foe.active.length - 1 - pokemon.position];
-			const move = this.dex.getActiveMove('slingshot');
+			const move = this.dex.getActiveMove('populationbomb');
 			const dmg = this.actions.getDamage(pokemon, target, move);
 			const hits = this.random(2, 3);
 			for (let i = 0; i < hits; i++) {
@@ -492,7 +492,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 				this.damage(dmg, target, pokemon);
 				if (this.randomChance(1, 10)) target.addVolatile('flinch');
 			}
-			this.add('-message', `${target.name} was pelted by ${pokemon.name}'s Slingshot!`);
 		},
 		onAfterMoveSecondarySelf(source, target, move) {
 			if (source === target || move.category === 'Status') return;
@@ -504,7 +503,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 				this.damage(dmg, target, source);
 				if (this.randomChance(1, 10)) target.addVolatile('flinch');
 			}
-			this.add('-message', `${target.name} was pelted by ${source.name}'s Slingshot!`);
 		},
 	},
 	// Shifu Robot
