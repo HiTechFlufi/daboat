@@ -35,9 +35,9 @@ export const Items: { [k: string]: ModdedItemData } = {
 					return;
 				}
 				this.add('-activate', pokemon, 'item: Everythingamajig');
+				this.add('-message', `Everythingamajig transformed into ${myItem.name}!`);
 				pokemon.item = myItem.id;
 				pokemon.setItem(myItem);
-				this.add('-message', `Everythingamajig transformed into ${myItem.name}!`);
 			},
 			onModifyMove(move, pokemon) {
 				if (move.id === 'payday') move.type = pokemon.getTypes()[0];
