@@ -3,10 +3,13 @@ export const Items: { [k: string]: ModdedItemData } = {
 	everythingamajig: {
 		name: "Everythingamajig",
 		gen: 9,
-		desc: "Upon switching in, copies the foe's item, replacing Everythingamajig. Reverts back to Everythingamajig upon switching out. If no active foes have a held item upon switching in, Everythingamajig explodes; Holder loses 1/3 max HP.",
+		desc: "Upon switching in, copies the foe's item, replacing Everythingamajig. Reverts back to Everythingamajig upon switching out. If no active foes have a held item upon switching in, Everythingamajig explodes; Holder loses 1/3 max HP. If the holder uses Pay Day, it changes type to match the holder's primary type.",
 		shortDesc: "Copies the foe's item until the holder switches.",
 		onStart(pokemon) {
 			if (!pokemon.volatiles['everythingamajig']) pokemon.addVolatile('everythingamajig');
+		},
+		onModifyMove(move, pokemon) {
+			if (move.id === 'payday') move.type = pokemon.getTypes()[0];
 		},
 		onSwitchOut(pokemon) {
 			if (pokemon.volatiles['everythingamajig']) pokemon.removeVolatile('everythingamajig');
@@ -35,6 +38,9 @@ export const Items: { [k: string]: ModdedItemData } = {
 				pokemon.item = myItem.id;
 				pokemon.setItem(myItem);
 				this.add('-message', `Everythingamajig transformed into ${myItem.name}!`);
+			},
+			onModifyMove(move, pokemon) {
+				if (move.id === 'payday') move.type = pokemon.getTypes()[0];
 			},
 			onEnd(pokemon) {
 				if (!pokemon.item) return;

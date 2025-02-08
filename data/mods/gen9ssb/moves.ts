@@ -2780,6 +2780,45 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		target: "normal",
 		type: "Steel",
 	},
+	// Gadget
+	capitalcannon: {
+		accuracy: 80,
+		basePower: 0,
+		category: "Physical",
+		name: "Capital Cannon",
+		desc: "Power increases by 20 BP for each coin the user has collected through Cash Grab. Fails if the user has no coins. Neutral effectiveness against all types.",
+		shortDesc: "Power determined by coins. Consumes all coins.",
+		pp: 5,
+		flags: { protect: 1 },
+		onTryMove(pokemon, target, move) {
+			this.attrLastMove('[still]');
+			if (!pokemon.abilityState.coins) {
+				this.add('-message', `${pokemon.name} used Capital Cannon...`)
+				this.add('-anim', pokemon, 'Splash', pokemon);
+				this.add('-message', `...but couldn't shoot from an empty cannon!`);
+				return false;
+			}
+		},
+		onPrepareHit(target, source) {
+			if (!source.abilityState.coins) return;
+			this.add('-anim', source, 'Taunt', target);
+			this.add('-anim', source, 'Make It Rain', target);
+			this.add('-message', `${source.name} consumed all its coins to power up Capital Cannon!`);
+		},
+		basePowerCallback(pokemon, target, move) {
+			if (!pokemon.abilityState.coins) return;
+			return 20 * pokemon.abilityState.coins;
+		},
+		onEffectiveness(typeMod, target, type) {
+			return 0;
+		},
+		onHit(target, source, move) {
+			source.abilityState.coins = 0;
+		},
+		secondary: null,
+		target: "normal",
+		type: "Steel",
+	},
 	// Glint
 	gigameld: {
 		accuracy: true,

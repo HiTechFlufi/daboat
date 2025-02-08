@@ -353,59 +353,50 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 		},
 	},
 	// Gadget
-	coincollector: {
-		name: "Coin Collector",
-		desc: "Collects coins. Weight and critical hit ratio scale with number of coins stored.",
-		shortDesc: "Collects coins. Weight/CritRate scale with coins.",
+	cashgrab: {
+		name: "Cash Grab",
+		desc: "Whenever this Pokemon uses Pay Day or Stockpile, it collects a random number of coins, ranging from 0 to the number of times Pay Day and Stockpile have been used this battle. This Pokemon's weight is multiplied by the number of coins stored.",
+		shortDesc: "Pay Day/Stockpile: Collects coins. Weight scales with coins.",
 		gen: 9,
 		flags: {},
 		onStart(pokemon) {
-			this.add('-activate', pokemon, 'ability: Coin Collector');
 			if (!pokemon.abilityState.coins) pokemon.abilityState.coins = 0;
-			let cc = this.random(51);
-			if (cc === 0) {
+			this.effectState.coins = pokemon.abilityState.coins;
+		},
+		onResidual(pokemon) {
+			this.add('-activate', pokemon, 'ability: Cash Grab');
+			if (!pokemon.abilityState.coins) pokemon.abilityState.coins = 0;
+			if (pokemon.abilityState.coins === 0) {
 				this.add('-message', `${pokemon.name} boasts... no coins?!`);
 				this.add('-anim', pokemon, 'Splash', pokemon);
 				this.add('-message', 'Aw, man!');
 			} else {
 				this.add('-anim', pokemon, 'Taunt', pokemon);
-				if (cc === 1) {
+				if (pokemon.abilityState.coins === 1) {
 					this.add('-message', `${pokemon.name} boasts one coin!`);
 				} else {
-					this.add('-message', `${pokemon.name} boasts ${cc} coins!`);
+					this.add('-message', `${pokemon.name} boasts ${pokemon.abilityState.coins} coins!`);
 				}
-				pokemon.abilityState.coins += cc;
-				this.effectState.coins = pokemon.abilityState.coins;
 			}
 		},
-		onResidual(pokemon) {
-			this.add('-activate', pokemon, 'ability: Coin Collector');
+		onUpdate(pokemon) {
 			if (!pokemon.abilityState.coins) pokemon.abilityState.coins = 0;
-			let cc = this.random(11);
-			if (cc === 0) return;
-			this.add('-anim', pokemon, 'Pay Day', pokemon);
-			this.add('-message', `${pokemon.name} found ${cc} coins!`);
-			pokemon.abilityState.coins += cc;
 			this.effectState.coins = pokemon.abilityState.coins;
 		},
 		onModifyWeight(weighthg) {
-			this.add('-message', `THIS.EFFECTSTATE.COINS = ${this.effectState.coins}`);
 			return weighthg * this.effectState.coins;
 		},
-		onModifyCritRatio(critRatio, source, target) {
-			this.add('-message', `${source.getWeight()}`);
-		},
-		onModifyMove(move, pokemon) {
-			if (move.id === 'payday') {
-				move.type = pokemon.getTypes()[0];
-				this.add('-activate', pokemon, 'ability: Coin Collector');
-				if (!pokemon.abilityState.coins) pokemon.abilityState.coins = 0;
-				let cc = this.random(11);
-				if (cc === 0) return;
-				this.add('-anim', pokemon, 'Celebrate', pokemon);
-				this.add('-message', `${pokemon.name} found ${cc} coins!`);
-				pokemon.abilityState.coins += cc;
-				this.effectState.coins = pokemon.abilityState.coins;
+		onAfterMoveSecondarySelf(source, target, move) {
+			if (['payday', 'stockpile'].includes(move.id)) {
+				this.add('-activate', source, 'ability: Cash Grab');
+				if (!source.abilityState.coins) source.abilityState.coins = 0;
+				if (!source.abilityState.pdTriggers) source.abilityState.pdTriggers = 0;
+				source.abilityState.pdTriggers++;
+				const gain = this.random(source.abilityState.pdTriggers + 1);
+				if (!gain) return;
+				this.add('-anim', source, 'Pay Day', source);
+				this.add('-anim', source, 'Tickle', source);
+				source.abilityState.coins += gain;
 			}
 		},
 	},
