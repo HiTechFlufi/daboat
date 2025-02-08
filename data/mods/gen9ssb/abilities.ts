@@ -364,7 +364,6 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			this.effectState.coins = pokemon.abilityState.coins;
 		},
 		onResidual(pokemon) {
-			this.add('-activate', pokemon, 'ability: Cash Grab');
 			if (!pokemon.abilityState.coins) pokemon.abilityState.coins = 0;
 			if (pokemon.abilityState.coins === 0) {
 				this.add('-message', `${pokemon.name} boasts... no coins?!`);
