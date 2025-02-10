@@ -12,7 +12,15 @@ export const Items: { [k: string]: ModdedItemData } = {
 			if (move.id === 'payday') move.type = pokemon.getTypes()[0];
 		},
 		onSwitchOut(pokemon) {
-			if (pokemon.volatiles['everythingamajig']) pokemon.removeVolatile('everythingamajig');
+			if (pokemon.volatiles['everythingamajig']) {
+				pokemon.removeVolatile('everythingamajig');
+				if (pokemon.item) {
+					let myItem = this.dex.items.get('Everythingamajig');
+					pokemon.item = myItem.id;
+					pokemon.setItem(myItem);
+					this.add('-message', `(Everythingamajig deactivated!)`);
+				}
+			}
 		},
 		condition: {
 			onStart(pokemon) {
@@ -47,7 +55,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 				let myItem = this.dex.items.get('everythingamajig');
 				pokemon.item = myItem.id;
 				pokemon.setItem(myItem);
-				this.add('-message', `(Everythingamajig deactivated!)`);
 			},
 		},
 	},
