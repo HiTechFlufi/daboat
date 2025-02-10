@@ -355,7 +355,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	// Gadget
 	cashgrab: {
 		name: "Cash Grab",
-		desc: "Whenever this Pokemon uses Pay Day or Stockpile, it collects a random number of coins, ranging from 0 to the number of times Pay Day and Stockpile have been used this battle. This Pokemon's weight is multiplied by the number of coins stored.",
+		desc: "Whenever this Pokemon uses Pay Day or Stockpile, it collects a random number of coins, ranging from 0 to 3x the number of times Pay Day and Stockpile have been used this battle. This Pokemon's weight is multiplied by the number of coins stored.",
 		shortDesc: "Pay Day/Stockpile: Collects coins. Weight scales with coins.",
 		gen: 9,
 		flags: {},
@@ -391,7 +391,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 				if (!source.abilityState.coins) source.abilityState.coins = 0;
 				if (!source.abilityState.pdTriggers) source.abilityState.pdTriggers = 0;
 				source.abilityState.pdTriggers++;
-				const gain = this.random(source.abilityState.pdTriggers + 1);
+				const gain = this.random((source.abilityState.pdTriggers * 3) + 1);
 				if (!gain) return;
 				this.add('-anim', source, 'Pay Day', source);
 				this.add('-anim', source, 'Tickle', source);
