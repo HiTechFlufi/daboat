@@ -1,4 +1,18 @@
 export const Items: { [k: string]: ModdedItemData } = {
+	// Lyssa
+	ramen: {
+		name: "Ramen",
+		gen: 9,
+		desc: "At end of turn, holder's Speed is increased by 1 stage and restores 1/4 max HP. Single use.",
+		shortDesc: "+25% HP/+1 SPE at end of turn. Single use.",
+		onResidual(pokemon) {
+			pokemon.eatItem();
+		},
+		onEat(pokemon) {
+			this.heal(pokemon.baseMaxhp / 4);
+			this.boost({spe: 1});
+		},
+	},
 	// Gadget
 	everythingamajig: {
 		name: "Everythingamajig",
