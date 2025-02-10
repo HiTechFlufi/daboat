@@ -25,7 +25,8 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 		desc: "This Pokemon's Attack increases by 1 stage whenever it is damaged by an attacking move. This Pokemon takes halved damage when at full HP. After taking 2 hits, transforms into Annihilape. After taking 4 hits, Endure becomes Rage Fist with 1 PP. After taking 6 hits. Rage Fist's PP is restored. Attacks recover 1/3 of damage dealt as Annihilape.",
 		shortDesc: "Damaged: +1 ATK; Multiscale; Varying effects as damage is taken.",
 		onStart(pokemon) {
-			pokemon.abilityState.hits = 0;
+			if (!pokemon.abilityState.hits) pokemon.abilityState.hits = 0;
+			if (pokemon.abilityState.transformed && pokemon.species.id !== 'annihilape') pokemon.formeChange('Annihilape');
 		},
 		onUpdate(pokemon) {
 			if (pokemon.abilityState.hits >= 2 && !pokemon.abilityState.transformed) pokemon.abilityState.transformed = true;
@@ -71,9 +72,6 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 				target.abilityState.hits++;
 				this.boost({atk: 1}, target, target);
 			}
-		},
-		onBeforeSwitchIn(pokemon) {
-			if (pokemon.abilityState.transformed && pokemon.species.id !== 'annihilape') pokemon.formeChange('Annihilape');
 		},
 	},
 	// Mink
