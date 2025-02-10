@@ -883,7 +883,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		condition: {
 			duration: 1,
 			onStart(pokemon) {
-				this.add('-singleturn', pokemon, 'move: Dominus Lapidis', '[silent]');
+				this.add('-message', `${pokemon.name} tightened its focus!`);
 			},
 		},
 		secondary: null,
@@ -915,7 +915,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			onTryPrimaryHit(target, source, move) {
 				// @ts-ignore
 				let originalDamage = this.actions.getDamage(source, target, move);
-				if (target === source || move.infiltrates) return;
+				if (target === source || move.infiltrates || move.category === 'Status') return;
 				if (!this.dex.getImmunity(move.type, 'Ground')) {
 					this.add('-immune', target);
 					return null;
