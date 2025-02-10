@@ -17,6 +17,65 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	},
 	*/
 	// Please keep abilites organized alphabetically based on staff member name!
+	// Lyssa
+	risinganger: {
+		name: "Rising Anger",
+		gen: 9,
+		flags: {},
+		desc: "This Pokemon's Attack increases by 1 stage whenever it is damaged by an attacking move. This Pokemon takes halved damage when at full HP. After taking 2 hits, transforms into Annihilape. After taking 4 hits, Endure becomes Rage Fist with 1 PP. After taking 6 hits. Rage Fist's PP is restored. Attacks recover 1/3 of damage dealt as Annihilape.",
+		shortDesc: "Damaged: +1 ATK; Multiscale; Varying effects as damage is taken.",
+		onStart(pokemon) {
+			pokemon.abilityState.hits = 0;
+		},
+		onUpdate(pokemon) {
+			if (pokemon.abilityState.hits >= 2 && !pokemon.abilityState.transformed) pokemon.abilityState.transformed = true;
+			if (pokemon.abilityState.transformed && pokemon.species.id !== 'annihilape') pokemon.formeChange('Annihilape');
+			if (pokemon.abilityState.hits >= 4 && pokemon.hasMove('endure')) {
+				const slot = pokemon.moves.indexOf('endure');
+				const move = this.dex.moves.get('ragefist');
+				const newSlot = {
+					move: move.name,
+					id: move.id,
+					pp: 1,
+					maxpp: 1,
+					target: move.target,
+					disabled: false,
+					used: false,
+				};
+				pokemon.moveSlots[slot] = newSlot;
+				pokemon.baseMoveSlots[slot] = newSlot;
+			}
+			if (pokemon.abilityState.hits >= 6 && !pokemon.abilityState.restoreTriggered) {
+				const rf = pokemon.moveSlots.find(move => move.id === 'ragefist');
+				if (rf) {
+					rf.pp = 1;
+					this.add('-message', `Rising Anger restored Rage Fist's PP!`);
+					pokemon.abilityState.restoreTriggered = true;
+				}
+			}
+		},
+		onModifyMove(move, pokemon) {
+			if (pokemon.species.id === 'annihilape' && !move.drain) {
+				move.drain = [1, 3];
+			}
+		},
+		onSourceModifyDamage(damage, source, target, move) {
+			if (target.hp >= target.maxhp) {
+				this.debug('Rising Anger halving damage');
+				return this.chainModify(0.5);
+			}
+		},
+		onHit(target, source, move) {
+			if (!target.hp) return;
+			if (move?.effectType === 'Move' && source !== target) {
+				target.abilityState.hits++;
+				this.boost({atk: 1}, target, target);
+			}
+		},
+		onBeforeSwitchIn(pokemon) {
+			if (pokemon.abilityState.transformed && pokemon.species.id !== 'annihilape') pokemon.formeChange('Annihilape');
+		},
+	},
 	// Mink
 	sickeningstench: {
 		name: "Sickening Stench",
