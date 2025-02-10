@@ -1363,7 +1363,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			} else {
 				target.hp -= damage;
 				if (target.hp < 0) target.hp = 0;
-				this.add('-damage', target, target.getHealth, target.getAbility());
+				this.add('-message', `${target.name} was hurt by Peal of Thunder!`);
 			}
 		},
 		onUpdate(pokemon) {
