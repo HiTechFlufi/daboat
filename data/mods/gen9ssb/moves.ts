@@ -2786,8 +2786,8 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		basePower: 0,
 		category: "Physical",
 		name: "Capital Cannon",
-		desc: "Power increases by 20 BP for each coin the user has collected through Cash Grab. Fails if the user has no coins. Neutral effectiveness against all types.",
-		shortDesc: "Power determined by coins. Consumes all coins.",
+		desc: "Power increases by 20 BP for each coin the user has collected through Cash Grab. Uses a maximum of 10 coins (200 BP). Fails if the user has no coins. Neutral effectiveness against all types.",
+		shortDesc: "Power determined by coins. Max 10 coins/200BP.",
 		pp: 5,
 		flags: { protect: 1 },
 		onTryMove(pokemon, target, move) {
@@ -2803,17 +2803,25 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			if (!source.abilityState.coins) return;
 			this.add('-anim', source, 'Taunt', target);
 			this.add('-anim', source, 'Steel Beam', target);
-			this.add('-message', `${source.name} consumed all its coins to power up Capital Cannon!`);
 		},
 		basePowerCallback(pokemon, target, move) {
 			if (!pokemon.abilityState.coins) return;
-			return 20 * pokemon.abilityState.coins;
+			if (pokemon.abilityState.coins > 10) {
+				// Capital Cannon only uses up to 10 coins at a time
+				return 200;
+			} else {
+				return 20 * pokemon.abilityState.coins;
+			}
 		},
 		onEffectiveness(typeMod, target, type) {
 			return 0;
 		},
 		onHit(target, source, move) {
-			source.abilityState.coins = 0;
+			if (source.abilityState.coins > 10) {
+				source.abilityState.coins -= 10;
+			} else {
+				source.abilityState.coins = 0;
+			}
 		},
 		secondary: null,
 		target: "normal",
