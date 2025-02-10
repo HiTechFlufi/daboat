@@ -8,20 +8,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 		onStart(pokemon) {
 			if (!pokemon.volatiles['everythingamajig']) pokemon.addVolatile('everythingamajig');
 		},
-		onModifyMove(move, pokemon) {
-			if (move.id === 'payday') move.type = pokemon.getTypes()[0];
-		},
-		onSwitchOut(pokemon) {
-			if (pokemon.volatiles['everythingamajig']) {
-				pokemon.removeVolatile('everythingamajig');
-				if (pokemon.item) {
-					let myItem = this.dex.items.get('Everythingamajig');
-					pokemon.item = myItem.id;
-					pokemon.setItem(myItem);
-					this.add('-message', `(Everythingamajig deactivated!)`);
-				}
-			}
-		},
 		condition: {
 			onStart(pokemon) {
 				let myItem = false;
@@ -50,11 +36,9 @@ export const Items: { [k: string]: ModdedItemData } = {
 			onModifyMove(move, pokemon) {
 				if (move.id === 'payday') move.type = pokemon.getTypes()[0];
 			},
-			onEnd(pokemon) {
-				if (!pokemon.item) return;
-				let myItem = this.dex.items.get('everythingamajig');
-				pokemon.item = myItem.id;
-				pokemon.setItem(myItem);
+			onSwitchOut(pokemon) {
+				if (pokemon.item) pokemon.setItem('Everythingamajig');
+				pokemon.removeVolatile('everythingamajig');
 			},
 		},
 	},
