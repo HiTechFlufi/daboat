@@ -535,33 +535,19 @@ export const Scripts: ModdedBattleScriptsData = {
 		case 'epipen':
 			let newHP = action.target.hp + (action.target.maxhp * 0.75);
 			if (newHP > action.target.maxhp) newHP = action.target.maxhp;
-			// @ts-ignore
 			action.target.hp = newHP;
-			// @ts-ignore
 			action.target.sethp(newHP);
-			// @ts-ignore
 			action.target.cureStatus();
-			this.add('-heal', action.target, action.target.getHealth);
-			// @ts-ignore
+			this.add('-message', `${action.pokemon.name}'s EpiPen restored ${action.target.name}'s health!`);
 			action.pokemon.side.removeSlotCondition(action.pokemon, 'epipen');
 			break;
 		case 'mimic':
 			if (action.pokemon.transformInto(action.target, this.dex.abilities.get('murderousmimic'))) {
 				action.pokemon.formeChange(action.target.species.name);
-				this.add('-message', `${action.pokemon.name} mimicked its ally ${action.target.name}!`);
+				this.add('-message', `${action.pokemon.name} mimicked its ally, ${action.target.name}!`);
 			}
 			//changeSet(this, action.pokemon, ssbSets[action.target.name], true);
 			action.pokemon.side.removeSlotCondition(action.pokemon, 'mimic');
-			break;
-		case 'shocktherapy':
-			let sHP = action.target.hp + (action.target.maxhp / 10);
-			// @ts-ignore
-			action.target.hp = sHP;
-			// @ts-ignore
-			action.target.sethp(sHP);
-			this.add('-heal', action.target, action.target.getHealth, '[from] move: Shock Therapy');
-			// @ts-ignore
-			action.pokemon.side.removeSlotCondition(action.pokemon, 'shocktherapy');
 			break;
 		case 'runUnnerve':
 			this.singleEvent('PreStart', action.pokemon.getAbility(), action.pokemon.abilityState, action.pokemon);
@@ -669,7 +655,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			} else if (switches[i]) {
 				for (const pokemon of this.sides[i].active) {
 					if (pokemon.hp && pokemon.switchFlag && pokemon.switchFlag !== 'revivalblessing' &&
-						pokemon.switchFlag !== 'epipen' && pokemon.switchFlag !== 'mimic' && pokemon.switchFlag !== 'shocktherapy' && !pokemon.skipBeforeSwitchOutEventFlag) {
+						pokemon.switchFlag !== 'epipen' && pokemon.switchFlag !== 'mimic' && !pokemon.skipBeforeSwitchOutEventFlag) {
 						this.runEvent('BeforeSwitchOut', pokemon);
 						pokemon.skipBeforeSwitchOutEventFlag = true;
 						this.faintMessages(); // Pokemon may have fainted in BeforeSwitchOut
@@ -1886,8 +1872,6 @@ export const Scripts: ModdedBattleScriptsData = {
 					return `switch ${action.target!.position + 1}`;
 				case 'mimic':
 					return `switch ${action.target!.position + 1}`;
-				case 'shocktherapy':
-					return `switch ${action.target!.position + 1}`;
 				case 'team':
 					return `team ${action.pokemon!.position + 1}`;
 				default:
@@ -1985,19 +1969,6 @@ export const Scripts: ModdedBattleScriptsData = {
 				// @ts-ignore custom request
 				this.choice.actions.push({
 					choice: 'mimic',
-					pokemon,
-					target: targetPokemon,
-				} as ChosenAction);
-				return true;
-			}
-
-			if (this.slotConditions[pokemon.position]['shocktherapy']) {
-				// Should always subtract, but stop at 0 to prevent errors.
-				this.choice.forcedSwitchesLeft = this.battle.clampIntRange(this.choice.forcedSwitchesLeft - 1, 0);
-				pokemon.switchFlag = false;
-				// @ts-ignore custom request
-				this.choice.actions.push({
-					choice: 'shocktherapy',
 					pokemon,
 					target: targetPokemon,
 				} as ChosenAction);
