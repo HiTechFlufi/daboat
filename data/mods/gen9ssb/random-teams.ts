@@ -264,6 +264,12 @@ export const ssbSets: SSBSets = {
 		signatureMove: 'Transfuse Toxin',
 		evs: { hp: 252, def: 108, spd: 148 }, ivs: { atk: 0 }, nature: 'Bold',
 	},
+	Lyssa: {
+		species: 'Primeape', ability: 'Rising Anger', item: 'Ramen', gender: 'F',
+		moves: ['Endure', 'Stomping Tantrum', 'Ice Spinner'],
+		signatureMove: 'Masochism',
+		evs: { hp: 4, atk: 252, spe: 252 }, ivs: { spa: 0 }, nature: 'Jolly',
+	},
 	/*
 	Miraju: {
 		species: 'Wynaut', ability: 'Illusive Energy', item: 'Eviolite', gender: 'N',
