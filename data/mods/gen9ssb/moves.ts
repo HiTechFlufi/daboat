@@ -60,12 +60,12 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			this.add('-anim', source, 'Mean Look', target);
 			this.add('-anim', source, 'Superpower', target);
 		},
-		onHit(pokemon) {
-			if (pokemon.item || !pokemon.lastItem) return false;
-			const item = pokemon.lastItem;
-			pokemon.lastItem = '';
-			this.add('-item', pokemon, this.dex.items.get(item), '[from] move: Masochism');
-			pokemon.setItem(item);
+		onHit(target, source, move) {
+			if (source.item || !source.lastItem) return false;
+			const item = source.lastItem;
+			source.lastItem = '';
+			this.add('-item', source, this.dex.items.get(item), '[from] move: Masochism');
+			source.setItem(item);
 		},
 		secondary: null,
 		target: "normal",
