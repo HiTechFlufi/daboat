@@ -13647,7 +13647,7 @@ export const Moves: {[moveid: string]: MoveData} = {
 	payday: {
 		num: 6,
 		accuracy: 100,
-		basePower: 40,
+		basePower: 80,
 		category: "Physical",
 		name: "Pay Day",
 		pp: 20,
