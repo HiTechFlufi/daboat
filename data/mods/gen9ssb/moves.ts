@@ -870,22 +870,16 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		priority: -8,
 		flags: {},
 		sideCondition: 'jadeshield',
+		beforeTurnCallback(pokemon) {
+			this.add('-anim', pokemon, 'Mean Look', pokemon);
+			this.add('-message', `${pokemon.name} tightened its focus!`);
+		},
 		onTryMove() {
 			this.attrLastMove('[still]');
 		},
 		onPrepareHit(target, source, move) {
-			this.add('-anim', source, 'Mean Look', target);
+			this.add('-anim', source, 'Bulk Up', source);
 			this.add('-anim', source, 'Aqua Ring', source);
-		},
-		priorityChargeCallback(pokemon) {
-			pokemon.addVolatile('dominuslapidis');
-		},
-		condition: {
-			duration: 1,
-			onStart(pokemon) {
-				this.add('-anim', pokemon, 'Work Up', pokemon);
-				this.add('-message', `${pokemon.name} tightened its focus!`);
-			},
 		},
 		secondary: null,
 		target: "allySide",
