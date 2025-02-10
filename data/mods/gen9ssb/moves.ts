@@ -41,6 +41,36 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		heal: [1, 2], // recover first num / second num % of the target's HP
 	},
 	*/
+	// Lyssa
+	masochism: {
+		name: "Masochism",
+		basePower: 80,
+		category: "Physical",
+		accuracy: 100,
+		gen: 9,
+		priority: 0,
+		pp: 15,
+		desc: "Restores the item the user last used.",
+		shortDesc: "Restores the item the user last used.",
+		flags: {contact: 1, protect: 1, metronome: 1},
+		onTryMove(target, source, move) {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source, move) {
+			this.add('-anim', source, 'Mean Look', target);
+			this.add('-anim', source, 'Superpower', target);
+		},
+		onHit(pokemon) {
+			if (pokemon.item || !pokemon.lastItem) return false;
+			const item = pokemon.lastItem;
+			pokemon.lastItem = '';
+			this.add('-item', pokemon, this.dex.items.get(item), '[from] move: Masochism');
+			pokemon.setItem(item);
+		},
+		secondary: null,
+		target: "normal",
+		type: "Fighting",
+	},
 	// Cinque
 	homerunswing: {
 		name: "Homerun Swing",
@@ -1734,7 +1764,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 	},
 	// Luminous
 	polaris: {
-		accuracy: 100,
+		accuracy: true,
 		basePower: 170,
 		category: "Special",
 		name: "Polaris",
