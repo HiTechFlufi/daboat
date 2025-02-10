@@ -874,7 +874,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			this.attrLastMove('[still]');
 		},
 		onPrepareHit(target, source, move) {
-			this.add('-anim', source, 'Work Up', source);
+			this.add('-anim', source, 'Mean Look', target);
 			this.add('-anim', source, 'Aqua Ring', source);
 		},
 		priorityChargeCallback(pokemon) {
@@ -883,6 +883,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		condition: {
 			duration: 1,
 			onStart(pokemon) {
+				this.add('-anim', pokemon, 'Work Up', pokemon);
 				this.add('-message', `${pokemon.name} tightened its focus!`);
 			},
 		},
