@@ -455,7 +455,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		accuracy: 100,
 		gen: 9,
 		priority: 0,
-		pp: 1
+		pp: 1,
 		flags: {},
 		noPPBoosts: true,
 		secondary: null,
