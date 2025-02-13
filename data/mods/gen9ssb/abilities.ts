@@ -70,7 +70,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			if (!target.hp) return;
 			if (move?.effectType === 'Move' && source !== target) {
 				target.abilityState.hits++;
-				this.boost({atk: 1}, target, target);
+				this.boost({ atk: 1 }, target, target);
 			}
 		},
 	},
@@ -331,14 +331,15 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 		},
 		onUpdate(pokemon) {
 			const target = pokemon.side.foe.active[pokemon.side.foe.active.length - 1 - pokemon.position];
-			if (this.effectState.revivalBlessing) {
+			if (this.effectState.revivalBlessing && !pokemon.abilityState.rbProc) {
+				pokemon.abilityState.rbProc = true;
 				this.effectState.revivalBlessing = false;
-				pokemon.abilityState.killMe = true;
+				this.effectState.killMe = true;
 				this.actions.useMove('Revival Blessing', pokemon);
 			}
 		},
 		onResidual(pokemon) {
-			if (pokemon.abilityState.killMe) pokemon.faint();
+			if (this.effectState.killMe) pokemon.faint();
 		},
 		onModifyMove(move, pokemon) {
 			if (move.id === 'present') {
@@ -1254,46 +1255,19 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	chaindrift: {
 		name: "Chain Drift",
 		gen: 9,
-		onModifyMove(move) {
-			if (move.id === 'spinout') {
-				delete move.self;
-			}
+		onStart() {
+			this.effectState.damaged = false;
 		},
 		onDamagingHit(damage, target, source, move) {
-			if (!move || !damage || source === target) return;
-			target.abilityState.damagedThisTurn = true;
+			if (!target || source === target) return;
+			this.boost({ spe: -1 }, target, source);
+			this.effectState.damaged = true;
 		},
 		onResidual(pokemon) {
-			if (!pokemon.abilityState.damagedThisTurn && pokemon.activeTurns) {
-				this.add('-activate', pokemon, 'ability: Chain Drift');
-				this.boost({ spe: 1 });
+			if (this.effectState.damaged === false) {
+				this.boost({ spe: 1 }, pokemon);
 			}
-			pokemon.abilityState.damagedThisTurn = false;
-		},
-		onAfterBoost(boost, target, source, effect) {
-			if (!boost.spe || boost.spe < 0) return;
-			let success = false;
-			for (const pokemon of target.foes()) {
-				if (!pokemon.isActive) continue;
-				if (!pokemon.activeTurns) {
-					success = true;
-					this.boost({ spe: -1 }, pokemon, target, effect);
-				}
-			}
-			if (success) {
-				this.add('-message', `${target.name} is shifting gears!`);
-				target.addVolatile('chaindrift');
-			}
-		},
-		condition: {
-			duration: 2,
-			onRestart(pokemon) {
-				this.effectState.duration = 2;
-			},
-			onDamagingHit(damage, target, source, move) {
-				if (!move || !damage || target === source) return;
-				this.boost({ spe: -1 });
-			},
+			this.effectState.damaged = false;
 		},
 	},
 	// Fblthp

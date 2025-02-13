@@ -52,7 +52,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		pp: 15,
 		desc: "Restores the item the user last used.",
 		shortDesc: "Restores the item the user last used.",
-		flags: {contact: 1, protect: 1, metronome: 1},
+		flags: { contact: 1, protect: 1, metronome: 1 },
 		onTryMove(target, source, move) {
 			this.attrLastMove('[still]');
 		},
@@ -216,6 +216,9 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 					move.onHit = function (t, s, m) {
 						this.boost({ spe: 1 }, s, s, m);
 					};
+					move.onAfterMoveSecondarySelf = function (p, t, m) {
+						this.boost({ spe: -2 }, p, p, m);
+					};
 					break;
 				case 'tripleredshell':
 					this.add(`raw|<b>Triple Red Shell!</b>`);
@@ -276,7 +279,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 					this.add('-anim', source, 'Wish', source);
 					target.side.addSideCondition('spinyshell');
 					target.side.sideConditions['spinyshell'].effectSource = source;
-					this.add('-message', `The shell disappeared into the sky!`);
+					this.add('-message', `The spiny shell disappeared into the sky!`);
 					return this.NOT_FAIL;
 					break;
 				case 'triplegreenshell':
@@ -306,9 +309,6 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 					return this.NOT_FAIL;
 					break;
 			}
-		},
-		onEffectiveness(typeMod, target, type) {
-			return 0;
 		},
 		secondary: null,
 		type: "Steel",
@@ -371,6 +371,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 				}
 			},
 			onEnd(pokemon) {
+				this.boost({ spe: -3 });
 				this.add('-message', `${pokemon.name}'s Bullet Bill ran out of gas!`);
 				pokemon.moveSlots[3] = this.effectState.oldMove;
 			},
@@ -438,11 +439,27 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 				}
 			},
 			onEnd(pokemon) {
+				this.boost({ spe: -3 });
 				this.add('-message', `${pokemon.name}'s Star Power wore off!`);
 				pokemon.moveSlots[3] = this.effectState.oldMove;
 			},
 		},
 		secondary: null,
+		type: "Steel",
+		target: "normal",
+	},
+	// Item Box integration only; not a real move
+	blueshell: {
+		name: "Blue Shell",
+		basePower: 120,
+		accuracy: 100,
+		gen: 9,
+		priority: 0,
+		pp: 1
+		flags: {},
+		noPPBoosts: true,
+		secondary: null,
+		category: "Physical",
 		type: "Steel",
 		target: "normal",
 	},
@@ -1751,7 +1768,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			}
 		},
 		onEffectiveness(typeMod, target, type, move) {
-			if (move.type === 'Water') return typeMod + this.dex.getEffectiveness('Fire', type);
+			return typeMod + this.dex.getEffectiveness('Fire', type);
 		},
 		onHit(target, source, move) {
 			source.side.addSideCondition('waterpledge');

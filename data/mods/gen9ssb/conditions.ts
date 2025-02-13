@@ -140,39 +140,28 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 			let target;
 			let highest = 0;
 			const source = this.effectState.effectSource;
-			const baseMove = this.dex.moves.get('itembox');
-			const itemBox = {
-				move: baseMove.name,
-				id: baseMove.id,
-				basePower: 1200,
-				pp: baseMove.pp,
-				maxpp: baseMove.pp,
-				target: baseMove.target,
-				disabled: false,
-				used: false,
-			};
+			const move = this.dex.moves.get('blueshell');
 			for (const pokemon of side.pokemon) {
 				if (pokemon.hp > highest) {
 					highest = pokemon.hp;
 					target = pokemon;
 				}
 			}
-			const damage = this.actions.getDamage(source, target, itemBox);
-			// Troubleshooting efforts
-			this.add('-message', `BLUE SHELL POWER: ${itemBox.basePower}`);
-			this.add('-message', `SOURCE: ${source.name}`);
-			this.add('-message', `DAMAGE: ${damage}`);
-			if (damage) {
-				if (target.isActive) {
-					this.add('-anim', target, 'Present', target);
-					this.add('-anim', target, 'Explosion', target);
-					this.add('-anim', target, 'Play Nice', target);
-					this.damage(damage, target, source, this.dex.conditions.get('Spiny Shell'));
-				} else {
-					target.hp -= damage;
-					this.add('-message', `${target.name} was hit by ${source.name}'s Spiny Shell!`);
-				}
+			let damage = this.actions.getDamage(source, target, move);
+			if (!damage || damage <= 0) {
+				this.add('-immune', target);
+				return;
 			}
+			if (damage > target.hp) damage = target.hp;
+			if (target.isActive) {
+				this.add('-anim', target, 'Present', target);
+				this.add('-anim', target, 'Explosion', target);
+				this.add('-anim', target, 'Play Nice', target);
+				this.damage(damage, target, source);
+			} else {
+				target.hp -= damage;
+			}
+			this.add('-message', `${target.name} was hit by ${source.name}'s Spiny Shell!`);
 		},
 	},
 	lightning: {
