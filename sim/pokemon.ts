@@ -1619,7 +1619,6 @@ export class Pokemon {
 			if (!sourceEffect) sourceEffect = this.battle.effect;
 		}
 		if (!source) source = this;
-		this.battle.add('-message', `SOURCE EFFECT ID: ${sourceEffect.id}`);
 		if (this.status === status.id) {
 			if ((sourceEffect as Move)?.status === this.status) {
 				this.battle.add('-fail', this, this.status);
