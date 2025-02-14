@@ -222,6 +222,7 @@ export const ssbSets: SSBSets = {
 		signatureMove: 'Emergency Meltdown',
 		evs: { hp: 120, atk: 136, spe: 252 }, ivs: { spa: 0 }, nature: 'Jolly',
 	},
+	/*
 	Varnava: {
 		species: 'Zygarde-Complete', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
 		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
@@ -240,6 +241,7 @@ export const ssbSets: SSBSets = {
 		signatureMove: 'Ecosystem Drain',
 		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant', skip: 'Varnava',
 	},
+ 	*/
 	PokeKart: {
 		species: 'Revavroom', ability: 'Chain Drift', item: 'Flame Flyer', gender: 'N',
 		moves: ['Spin Out', 'Blazing Torque', 'U-turn'],
