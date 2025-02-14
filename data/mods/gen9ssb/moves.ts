@@ -750,11 +750,11 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			this.attrLastMove('[still]');
 		},
 		onPrepareHit(target, source, move) {
-			this.add('-anim', source, 'Acid', target);
+			this.add('-anim', source, 'Sludge Wave', target);
 			this.add('-anim', source, 'Strength Sap', target);
 		},
 		onHit(target, source, move) {
-			target.setStatus('tox', source, move);
+			target.setStatus('tox', source, move.id, true);
 		},
 		// Stage advancement handled in ../../../conditions.ts
 		secondary: null,
