@@ -1619,7 +1619,7 @@ export class Pokemon {
 			if (!sourceEffect) sourceEffect = this.battle.effect;
 		}
 		if (!source) source = this;
-
+		this.add('-message', `SOURCE EFFECT ID: ${sourceEffect.id}`);
 		if (this.status === status.id) {
 			if ((sourceEffect as Move)?.status === this.status) {
 				this.battle.add('-fail', this, this.status);
@@ -1631,7 +1631,7 @@ export class Pokemon {
 		}
 
 		if (!ignoreImmunities && status.id &&
-				!(source?.hasAbility('corrosion') && !sourceEffect.name !== 'Transfuse Toxin' && ['tox', 'psn'].includes(status.id))) {
+				!(source?.hasAbility('corrosion') && sourceEffect.name !== 'Transfuse Toxin' && ['tox', 'psn'].includes(status.id))) {
 			// the game currently never ignores immunities
 			if (!this.runStatusImmunity(status.id === 'tox' ? 'psn' : status.id)) {
 				this.battle.debug('immune to status');
