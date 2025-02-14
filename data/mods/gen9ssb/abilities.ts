@@ -1461,7 +1461,6 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			// Recharge if out of battery
 			if (pokemon.abilityState.gauges <= 0) {
 				this.add(`-anim`, pokemon, 'Tickle', pokemon);
-				this.add('-activate', pokemon, 'ability: Battery Life');
 				this.add('-message', `${pokemon.name} is out of battery!`);
 				this.field.setTerrain('electricterrain');
 				pokemon.addVolatile('mustrecharge');
