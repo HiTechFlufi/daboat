@@ -741,16 +741,22 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			}
 		},
 		onDamage(damage, target, source, effect) {
+			// If current HP is more than 50%...
 			if (target.hp > target.maxhp / 2) {
+				// Do not cap at half HP if HP was already capped at half this battle, OR if species is not Complete
+				// Damage should only cap at half HP when transforming from Complete to Zygarde-50
+				if (target.abilityState.halfCapped || target.species.id !== 'zygardecomplete') return;
 				if (target.hp - damage < target.maxhp / 2) {
-					if (target.abilityState.halfCapped) return;
 					target.abilityState.halfCapped = true;
 					return target.hp - target.maxhp / 2;
 				}
 			}
+			// If current HP is between 25% and 49%...
 			if (target.hp <= target.maxhp / 2 && target.hp > target.maxhp / 4) {
+				// Do not cap at 1/4 HP if HP was already capped at 1/4 this battle, OR if species is not Zygarde-50
+				// Damage should only cap at 1/4 HP when transforming from Zygarde-50 to Zygarde-10
+				if (target.abilityState.quarterCapped || target.species.id !== 'zygarde') return;
 				if (target.hp - damage < target.maxhp / 4) {
-					if (target.abilityState.quarterCapped) return;
 					target.abilityState.quarterCapped = true;
 					return target.hp - target.maxhp / 4;
 				}
