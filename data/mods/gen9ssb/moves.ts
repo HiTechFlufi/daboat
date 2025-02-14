@@ -189,7 +189,8 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		beforeTurnCallback(pokemon) {
 			// mario puncha da block weeheeeee HELP ME.
 			this.add('-anim', pokemon, 'Sky Uppercut', pokemon);
-			const items = ['megamushroom', 'megamushroom', 'triplemushroom', 'triplemushroom', 'tripleredshell', 'tripleredshell', 'star', 'triplebanana', 'triplebanana', 'boo', 'boo', 'powblock', 'powblock', 'spinyshell', 'spinyshell', 'triplegreenshell', 'triplegreenshell', 'blooper', 'blooper', 'bulletbill'];
+			const items = ['spinyshell', 'spinyshell'];
+			//const items = ['megamushroom', 'megamushroom', 'triplemushroom', 'triplemushroom', 'tripleredshell', 'tripleredshell', 'star', 'triplebanana', 'triplebanana', 'boo', 'boo', 'powblock', 'powblock', 'spinyshell', 'spinyshell', 'triplegreenshell', 'triplegreenshell', 'blooper', 'blooper', 'bulletbill'];
 			const selectedItem = this.sample(items);
 			pokemon.abilityState.itemBox = selectedItem;
 		},

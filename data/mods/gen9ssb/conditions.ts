@@ -140,26 +140,42 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 			let target;
 			let highest = 0;
 			const source = this.effectState.effectSource;
-			const move = this.dex.moves.get('blueshell');
+			const move = {
+				move: 'Iron Head',
+				id: 'ironhead',
+				basePower: 120,
+				pp: 10,
+				maxpp: 25,
+				target: 'normal',
+				disabled: false,
+				used: false,
+			};
 			for (const pokemon of side.pokemon) {
 				if (pokemon.hp > highest) {
 					highest = pokemon.hp;
 					target = pokemon;
 				}
 			}
-			let damage = this.actions.getDamage(source, target, move);
+			if (!target || !highest) {
+				this.add('-message', `ERROR: No target found. Contact the developer.`);
+				return;
+			}
+			const damage = this.actions.getDamage(source, target, move);
 			if (!damage || damage <= 0) {
 				this.add('-immune', target);
 				return;
 			}
-			if (damage > target.hp) damage = target.hp;
 			if (target.isActive) {
 				this.add('-anim', target, 'Present', target);
 				this.add('-anim', target, 'Explosion', target);
 				this.add('-anim', target, 'Play Nice', target);
 				this.damage(damage, target, source);
 			} else {
-				target.hp -= damage;
+				if (damage > target.hp) {
+					target.hp = 0;
+				} else {
+					target.hp -= damage;
+				}
 			}
 			this.add('-message', `${target.name} was hit by ${source.name}'s Spiny Shell!`);
 		},
