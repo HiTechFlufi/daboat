@@ -1402,16 +1402,17 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			if (pokemon.abilityState.gauges === undefined) pokemon.abilityState.gauges = 5;
 		},
 		onBasePower(basePower, attacker, defender, move) {
+			if (move.category === 'Status') return;
 			if (!attacker.abilityState.gauges || attacker.abilityState.gauges === undefined) attacker.abilityState.gauges = 0;
 			switch (attacker.abilityState.gauges) {
-				case 3:
 				case 0:
-					break;
 				case 1:
 					return this.chainModify(0.5);
 					break;
 				case 2:
 					return this.chainModify(0.75);
+					break;
+				case 3:
 					break;
 				case 4:
 					return this.chainModify(1.25);
@@ -1432,7 +1433,8 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			}
 		},
 		onBeforeMove(pokemon, target, move) {
-			// Use gauges for electric moves
+			// Use gauges for non-status electric moves
+			if (move.category === 'Status') return;
 			if (move.type === 'Electric') {
 				if (pokemon.abilityState.gauges < 2) {
 					this.debug("Not enough battery");
@@ -1458,19 +1460,19 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 		onResidual(pokemon) {
 			// Recharge if out of battery
 			if (pokemon.abilityState.gauges <= 0) {
-				this.add(`-anim`, pokemon, "Splash");
+				this.add(`-anim`, pokemon, 'Tickle', pokemon);
 				this.add('-activate', pokemon, 'ability: Battery Life');
 				this.add('-message', `${pokemon.name} is out of battery!`);
 				this.field.setTerrain('electricterrain');
 				pokemon.addVolatile('mustrecharge');
 				// Charge if at maximum battery
 			} else if (pokemon.abilityState.gauges >= 5) {
-				this.add(`-anim`, pokemon, "Charge");
+				this.add(`-anim`, pokemon, 'Charge', pokemon);
 				pokemon.addVolatile('charge');
 				this.add('-message', `${pokemon.name} is at maximum charge!`);
 				// Otherwise state charge amount
 			} else {
-				this.add(`-anim`, pokemon, "Charge");
+				this.add(`-anim`, pokemon, 'Charge', pokemon);
 				this.add('-message', `${pokemon.name} is at ${(pokemon.abilityState.gauges / 5) * 100}% battery!`);
 			}
 			// Add charge from sleep or terrain
