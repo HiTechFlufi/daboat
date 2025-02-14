@@ -362,21 +362,39 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 
 	'0%': {
 		name: "0%",
+		onStart(pokemon) {
+			this.add('-start', pokemon, '0%', '[silent]');
+		},
 	},
 	'20%': {
 		name: "20%",
+		onStart(pokemon) {
+			this.add('-start', pokemon, '20%', '[silent]');
+		},
 	},
 	'40%': {
 		name: "40%",
+		onStart(pokemon) {
+			this.add('-start', pokemon, '40%', '[silent]');
+		},
 	},
 	'60%': {
 		name: "60%",
+		onStart(pokemon) {
+			this.add('-start', pokemon, '60%', '[silent]');
+		},
 	},
 	'80%': {
 		name: "80%",
+		onStart(pokemon) {
+			this.add('-start', pokemon, '80%', '[silent]');
+		},
 	},
 	'100%': {
 		name: "100%",
+		onStart(pokemon) {
+			this.add('-start', pokemon, '100%', '[silent]');
+		},
 	},
 
 	aegii: {
