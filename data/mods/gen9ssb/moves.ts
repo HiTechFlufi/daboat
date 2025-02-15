@@ -3305,10 +3305,14 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			}
 			target.addVolatile('shikigamiran');
 			target.abilityState.ran = true;
+			target.
 		},
 		condition: {
 			onResidual(pokemon) {
-				let sources = pokemon.side.foe.pokemon.filter(ally => ally.name === 'Yukari Yakumo');
+				this.effectState.effectSource
+				// Butt ugly short-term solution
+				// Samples for literally every mon in the game capable of copying moves
+				let sources = pokemon.side.foe.pokemon.filter(ally => ally.name === 'Yukari Yakumo' || ally.name === 'Pablo' || ally.name === 'Emerl' || ally.name === 'Finger');
 				let source;
 				if (!sources) {
 					source = pokemon.side.foe.active[0];
