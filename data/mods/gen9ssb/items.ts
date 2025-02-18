@@ -756,8 +756,7 @@ export const Items: { [k: string]: ModdedItemData } = {
 				for (const ally of pokemon.side.pokemon) {
 					if (ally === pokemon) continue;
 					if (ally.fainted || ally.hp <= 0) continue;
-					if (ally.hp >= ally.maxhp) continue;
-					if (!ally.status) continue;
+					if (ally.hp >= ally.maxhp && !ally.status) continue;
 					thisSideAllies.push(ally);
 				}
 				// If there are no surviving allies that require healing of any kind, use on self automatically
