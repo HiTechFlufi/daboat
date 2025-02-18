@@ -1,4 +1,63 @@
 export const Items: { [k: string]: ModdedItemData } = {
+	// Roughskull
+	cheaterglasses: {
+		name: "Cheater Glasses",
+		desc: "This Pokemon takes halved damage from attacks when it's at full HP. On switch-in, This Pokemon's Attack or Special Attack increases by 1 stage based on the foe's lower defense stat, and this Pokemon's Defense or Special Defense increases by 1 stage based on the foe's higher attack stat.",
+		shortDesc: "On switch-in, boosts stats based on foe's weaker Defense/stronger Attack; Multiscale.",
+		gen: 9,
+		onStart(pokemon) {
+			let totaldef = 0;
+			let totalspd = 0;
+			let totalatk = 0;
+			let totalspa = 0;
+			for (const target of pokemon.side.foe.active) {
+				if (!target || target.fainted || target.hp <= 0) continue;
+				totaldef += target.getStat('def', false, true);
+				totalspd += target.getStat('spd', false, true);
+				totalatk += target.getStat('atk', false, true);
+				totalspa += target.getStat('spa', false, true);
+			}
+			if (totaldef && totaldef > totalspd) {
+				this.boost({ spa: 1 });
+			} else if (totalspd && totalspd > totaldef) {
+				this.boost({ atk: 1 });
+			} else {
+				if (this.randomChance(1, 2)) {
+					this.boost({ spa: 1 });
+				} else {
+					this.boost({ atk: 1 });
+				}
+			}
+			if (totalatk && totalatk > totalspa) {
+				this.boost({ def: 1 });
+			} else if (totalspa && totalspa > totalatk) {
+				this.boost({ spd: 1 });
+			} else {
+				if (this.randomChance(1, 2)) {
+					this.boost({ def: 1 });
+				} else {
+					this.boost({ spd: 1 });
+				}
+			}
+		},
+		onSourceModifyDamage(damage, source, target, move) {
+			if (target.hp >= target.maxhp) {
+				this.debug(`Cheater Glasses halving damage from full HP`);
+				return this.chainModify(0.5);
+			}
+		},
+	},
+	// Horrific17
+	horrifiumz: {
+		name: "Horrifium Z",
+		gen: 9,
+		shortDesc: "Arcanine with Meteor Strike can use Chicxulub Impact.",
+		desc: "If held by an Arcanine with Meteor Strike, it can use Chicxulub Impact.",
+		zMove: "Chicxulub Impact",
+		zMoveFrom: "Meteor Strike",
+		itemUser: ["Arcanine"],
+		onTakeItem: false,
+	},
 	// Lyssa
 	ramen: {
 		name: "Ramen",
@@ -10,7 +69,7 @@ export const Items: { [k: string]: ModdedItemData } = {
 		},
 		onEat(pokemon) {
 			this.heal(pokemon.baseMaxhp / 4);
-			this.boost({spe: 1});
+			this.boost({ spe: 1 });
 		},
 	},
 	// Gadget
@@ -495,11 +554,11 @@ export const Items: { [k: string]: ModdedItemData } = {
 				}
 				this.add('-anim', pokemon, 'Bullet Seed', target);
 				this.damage(dmg, target, pokemon);
-				if (this.randomChance(1, 10)) target.addVolatile('flinch');
+				if (dmg && dmg > 0 && this.randomChance(1, 10)) target.addVolatile('flinch');
 			}
 		},
 		onAfterMoveSecondarySelf(source, target, move) {
-			if (source === target || move.category === 'Status') return;
+			if (source === target || move.category === 'Status' || !target || target.fainted) return;
 			const base = this.dex.getActiveMove('populationbomb');
 			const dmg = this.actions.getDamage(source, target, base);
 			const hits = this.random(2, 3);
@@ -571,6 +630,8 @@ export const Items: { [k: string]: ModdedItemData } = {
 	flameflyer: {
 		name: "Flame Flyer",
 		gen: 9,
+		desc: "This Pokemon becomes Steel/Fire-type upon switching in. This Pokemon's attacks use Speed in damage calculation instead of Attack or Special Attack.",
+		shortDesc: "Steel/Fire; Uses Speed in damage calculation.",
 		onStart(pokemon) {
 			if (pokemon.setType(['Steel', 'Fire'])) this.add('-start', pokemon, 'typechange', 'Steel/Fire', '[from] item: Flame Flyer');
 		},
@@ -691,6 +752,21 @@ export const Items: { [k: string]: ModdedItemData } = {
 		onUpdate(pokemon) {
 			if (pokemon.hp <= pokemon.maxhp / 3 && !this.effectState.epiUsed) {
 				this.add('-activate', pokemon, 'item: EpiPen');
+				let thisSideAllies = [];
+				for (const ally of pokemon.side.pokemon) {
+					if (ally === pokemon) continue;
+					if (ally.fainted || ally.hp <= 0) continue;
+					if (ally.hp >= ally.maxhp) continue;
+					if (!ally.status) continue;
+					thisSideAllies.push(ally);
+				}
+				// If there are no surviving allies that require healing of any kind, use on self automatically
+				if (!thisSideAllies.length) {
+					this.heal(pokemon.maxhp * 0.75, pokemon);
+					if (pokemon.status) pokemon.cureStatus();
+					this.effectState.epiUsed = true;
+					return;
+				}
 				pokemon.side.addSlotCondition(pokemon, 'epipen');
 				pokemon.switchFlag = true;
 				this.effectState.epiUsed = true;

@@ -143,7 +143,7 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 			const move = {
 				move: 'Iron Head',
 				id: 'ironhead',
-				basePower: 120,
+				basePower: 600,
 				pp: 10,
 				maxpp: 25,
 				target: 'normal',

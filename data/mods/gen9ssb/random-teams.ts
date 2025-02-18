@@ -222,26 +222,6 @@ export const ssbSets: SSBSets = {
 		signatureMove: 'Emergency Meltdown',
 		evs: { hp: 120, atk: 136, spe: 252 }, ivs: { spa: 0 }, nature: 'Jolly',
 	},
-	/*
-	Varnava: {
-		species: 'Zygarde-Complete', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
-		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
-		signatureMove: 'Ecosystem Drain',
-		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant',
-	},
-	'Varnava-50': {
-		species: 'Zygarde', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
-		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
-		signatureMove: 'Ecosystem Drain',
-		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant', skip: 'Varnava',
-	},
-	'Varnava-25': {
-		species: 'Zygarde-10%', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
-		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
-		signatureMove: 'Ecosystem Drain',
-		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant', skip: 'Varnava',
-	},
- 	*/
 	PokeKart: {
 		species: 'Revavroom', ability: 'Chain Drift', item: 'Flame Flyer', gender: 'N',
 		moves: ['Spin Out', 'Blazing Torque', 'U-turn'],
@@ -272,7 +252,55 @@ export const ssbSets: SSBSets = {
 		signatureMove: 'Masochism',
 		evs: { hp: 4, atk: 252, spe: 252 }, ivs: { spa: 0 }, nature: 'Jolly',
 	},
+	Horrific17: {
+		species: 'Arcanine', ability: 'Adaptive Fighter', item: 'Horrifium Z', gender: 'M',
+		moves: ['Extreme Speed', 'Solar Blade', 'Wish'],
+		signatureMove: 'Meteor Strike',
+		evs: { hp: 4, atk: 252, spe: 252 }, ivs: { spa: 0 }, nature: 'Jolly',
+	},
+	Roughskull: {
+		species: 'Skuntank', ability: 'Venom Shock', item: 'Cheater Glasses', gender: 'N',
+		moves: ['Sucker Punch', 'Drain Punch', 'Strange Steam'],
+		signatureMove: 'Radiation Stench',
+		evs: { hp: 252, atk: 252, spd: 4 }, ivs: {}, nature: 'Brave',
+	},
 	/*
+	SunDraco: {
+		species: 'Type: Null', ability: 'Ephemerate', item: 'Basilisk Collar', gender: 'N',
+		moves: ['Swords Dance', 'Retaliate', 'Last Respects'],
+		signatureMove: 'Ein Sol',
+		evs: { hp: 88, atk: 252, spe: 168 }, ivs: { spa: 0 }, nature: 'Adamant',
+	},
+	Croupier: {
+		species: 'Hoopa', ability: 'House Rules', item: 'Staufen\'s Die', gender: 'M',
+		moves: ['Photon Geyser', 'Ominous Wind', 'Tap Out'],
+		signatureMove: 'Roll the Dice',
+		evs: { hp: 248, spa: 8, spe: 252 }, nature: 'Hasty',
+	},
+	Faust: {
+		species: 'Hoopa-Unbound', ability: 'Alea Iacta Est', item: 'Staufen\'s Die', gender: 'M',
+		moves: ['Eerie Spell', 'Topsy Turvy', 'Kniffel'],
+		signatureMove: 'Faustian Bargain',
+		evs: { hp: 248, spa: 8, spe: 252 }, nature: 'Hasty', skip: 'Croupier',
+	},
+	Varnava: {
+		species: 'Zygarde-Complete', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
+		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
+		signatureMove: 'Ecosystem Drain',
+		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant',
+	},
+	'Varnava-50': {
+		species: 'Zygarde', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
+		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
+		signatureMove: 'Ecosystem Drain',
+		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant', skip: 'Varnava',
+	},
+	'Varnava-25': {
+		species: 'Zygarde-10%', ability: 'Cell Deconstruct', item: 'Varnavium Z', gender: 'M',
+		moves: ['Core Enforcer', 'Thousand Arrows', 'Coil'],
+		signatureMove: 'Ecosystem Drain',
+		evs: { hp: 252, atk: 252, spd: 4 }, nature: 'Adamant', skip: 'Varnava',
+	},
 	Miraju: {
 		species: 'Wynaut', ability: 'Illusive Energy', item: 'Eviolite', gender: 'N',
 		moves: ['Hyperspace Hole', 'Glare', 'Memento'],
@@ -325,18 +353,6 @@ export const ssbSets: SSBSets = {
 		moves: ['Metal Burst', 'King\'s Shield', 'Spikes'],
 		signatureMove: 'Sanguine Shuriken',
 		evs: {hp: 248, spd: 8, spe: 252}, nature: 'Jolly', shiny: true,
-	},
-	Croupier: {
-		species: 'Hoopa', ability: 'Fair Play', item: 'Staufen\'s Die', gender: 'M',
-		moves: ['Photon Geyser', 'Ominous Wind', 'Tap Out'],
-		signatureMove: 'Roll the Dice',
-		evs: {hp: 252, spa: 4, spe: 252}, nature: 'Hasty',
-	},
-	Faust: {
-		species: 'Hoopa-Unbound', ability: 'The Devil Is In The Details', item: 'Crossroads Blues', gender: 'M',
-		moves: ['Eerie Spell', 'Topsy Turvy', 'Kniffel'],
-		signatureMove: 'Faustian Bargain',
-		evs: {hp: 252, spa: 4, spe: 252}, nature: 'Hasty', skip: 'Croupier',
 	},
 	*/
 };

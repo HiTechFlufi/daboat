@@ -1,4 +1,4 @@
-export const Conditions: {[k: string]: ConditionData} = {
+export const Conditions: { [k: string]: ConditionData } = {
 	brn: {
 		name: 'brn',
 		effectType: 'Status',
@@ -139,12 +139,7 @@ export const Conditions: {[k: string]: ConditionData} = {
 		name: 'tox',
 		effectType: 'Status',
 		onStart(target, source, sourceEffect) {
-			this.effectState.sourceEffect = sourceEffect.id;
-			if (sourceEffect.id === 'transfusetoxin') {
-				this.effectState.stage = 3;
-			} else {
-				this.effectState.stage = 0;
-			}
+			this.effectState.stage = 0;
 			if (sourceEffect && sourceEffect.id === 'toxicorb') {
 				this.add('-status', target, 'tox', '[from] item: Toxic Orb');
 			} else if (sourceEffect && sourceEffect.effectType === 'Ability') {
@@ -152,12 +147,15 @@ export const Conditions: {[k: string]: ConditionData} = {
 			} else {
 				this.add('-status', target, 'tox');
 			}
+			if (sourceEffect && sourceEffect.id === 'transfusetoxin') {
+				this.effectState.stage += 4;
+			}
+			this.effectState.sourceEffect = sourceEffect.id;
 		},
 		onSwitchIn() {
+			this.effectState.stage = 0;
 			if (this.effectState.sourceEffect === 'transfusetoxin') {
-				this.effectState.stage = 3;
-			} else {
-				this.effectState.stage = 0;
+				this.effectState.stage += 4;
 			}
 		},
 		onResidualOrder: 9,
@@ -199,7 +197,7 @@ export const Conditions: {[k: string]: ConditionData} = {
 			this.activeTarget = pokemon;
 			const damage = this.actions.getConfusionDamage(pokemon, 40);
 			if (typeof damage !== 'number') throw new Error("Confusion damage not dealt");
-			const activeMove = {id: this.toID('confused'), effectType: 'Move', type: '???'};
+			const activeMove = { id: this.toID('confused'), effectType: 'Move', type: '???' };
 			this.damage(damage, pokemon, pokemon, activeMove as ActiveMove);
 			return false;
 		},
@@ -543,7 +541,7 @@ export const Conditions: {[k: string]: ConditionData} = {
 		effectType: 'Weather',
 		duration: 5,
 		durationCallback(source, effect) {
-			if (source?.hasItem('heatrock')) {
+			if (source?.hasItem('heatrock') || effect?.id === 'meteorstrike') {
 				return 8;
 			}
 			return 5;
@@ -588,6 +586,10 @@ export const Conditions: {[k: string]: ConditionData} = {
 		name: 'DesolateLand',
 		effectType: 'Weather',
 		duration: 0,
+		onFieldStart(field, source, effect) {
+			this.add('-weather', 'DesolateLand', '[from] ability: ' + effect.name, '[of] ' + source);
+			this.effectState.boostedSide = source.side;
+		},
 		onTryMovePriority: 1,
 		onTryMove(attacker, defender, move) {
 			if (move.type === 'Water' && move.category !== 'Status') {
@@ -598,14 +600,17 @@ export const Conditions: {[k: string]: ConditionData} = {
 			}
 		},
 		onWeatherModifyDamage(damage, attacker, defender, move) {
+			let totalMod = 1;
 			if (defender.hasItem('utilityumbrella')) return;
 			if (move.type === 'Fire') {
 				this.debug('Sunny Day fire boost');
-				return this.chainModify(1.5);
+				totalMod += 0.5;
 			}
-		},
-		onFieldStart(field, source, effect) {
-			this.add('-weather', 'DesolateLand', '[from] ability: ' + effect.name, '[of] ' + source);
+			if (this.effectState.boostedSide === attacker.side) {
+				this.debug('Chicxulub Impact 1.2 boost');
+				totalMod += 0.2;
+			}
+			return this.chainModify(totalMod);
 		},
 		onImmunity(type, pokemon) {
 			if (pokemon.hasItem('utilityumbrella')) return;
@@ -805,7 +810,7 @@ export const Conditions: {[k: string]: ConditionData} = {
 		name: "Commanded",
 		noCopy: true,
 		onStart(pokemon) {
-			this.boost({atk: 2, spa: 2, spe: 2, def: 2, spd: 2}, pokemon);
+			this.boost({ atk: 2, spa: 2, spe: 2, def: 2, spd: 2 }, pokemon);
 		},
 		onDragOutPriority: 2,
 		onDragOut() {

@@ -41,6 +41,129 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		heal: [1, 2], // recover first num / second num % of the target's HP
 	},
 	*/
+	// Roughskull
+	radiationstench: {
+		name: "Radiation Stench",
+		category: "Physical",
+		gen: 9,
+		desc: "Power doubles if the target is poisoned, and has a 20% chance to cause the target to flinch. Neutral effectiveness against Steel-type. Nullifies the target's ability upon hitting.",
+		shortDesc: "20%: Flinch. PSN: 2x power. Neutral vs Steel. Nullifies abilities.",
+		basePower: 100,
+		accuracy: 100,
+		pp: 10,
+		priority: 0,
+		volatileStatus: 'gastroacid',
+		ignoreImmunity: {'Poison': true},
+		flags: { protect: 1, metronome: 1 },
+		onTryMove(target, source, move) {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source, move) {
+			this.add('-anim', source, 'Gunk Shot', target);
+			this.add('-anim', target, 'G-Max Malodor', target);
+		},
+		onEffectiveness(typeMod, target, type) {
+			if (type === 'Steel') return 0;
+		},
+		onBasePower(basePower, pokemon, target) {
+			if (target.status === 'psn' || target.status === 'tox') {
+				return this.chainModify(2);
+			}
+		},
+		secondary: {
+			chance: 20,
+			volatileStatus: 'flinch',
+		},
+		type: "Poison",
+		target: "normal",
+	},
+	// Horrific17
+	chicxulubimpact: {
+		name: "Chicxulub Impact",
+		category: "Physical",
+		gen: 9,
+		basePower: 150,
+		accuracy: true,
+		pp: 1,
+		priority: 0,
+		flags: { contact: 1 },
+		status: 'brn',
+		sideCondition: "chicxulubimpact",
+		onTryMove(target, source, move) {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source, move) {
+			this.add('-anim', source, 'Draco Meteor', target);
+			this.add('-anim', source, 'V-Create', target);
+			this.add('-anim', target, 'Explosion', target);
+			this.add('-anim', target, 'Inferno', target);
+			if (source.hp < source.maxhp / 2) {
+				for (const side of source.side.foeSidesWithConditions()) {
+					side.addSideCondition('gmaxwildfire', source, move);
+				}
+			} else if (source.hp >= source.maxhp / 2) {
+				this.field.setWeather('desolateland', source, move);
+			}
+		},
+		condition: {
+			duration: 5,
+			onSideStart(side) {
+				this.add('-sidestart', side, 'move: Chicxulub Impact');
+			},
+			durationCallback(target, source) {
+				// Makeshift solution to make the trapping last 4-5 turns; default to 5, but 50% chance it changes to 4 instead
+				// Fire Spin lasts 4-5 turns and I have no fucking clue how this.random works
+				if (this.randomChance(1, 2)) return 4;
+			},
+			onTrapPokemon(pokemon) {
+				pokemon.tryTrap();
+			},
+			onResidual(pokemon) {
+				this.add('-anim', pokemon, 'Fire Spin', pokemon);
+				this.damage(pokemon.maxhp / 8, pokemon, this.effectState.source, this.dex.moves.get('firespin'));
+			},
+			onSideEnd(side) {
+				this.add('-sideend', side, 'move: Chicxulub Impact');
+			},
+		},
+		secondary: null,
+		type: "Fire",
+		target: "allAdjacent",
+	},
+	meteorstrike: {
+		name: "Meteor Strike",
+		category: "Physical",
+		gen: 9,
+		shortDesc: "+50% HP: Sunny Day, BRN, -1/4 HP. -49% HP: 33% recoil.",
+		desc: "If this Pokemon has 50% max HP or higher, -6 priority, summons Sunny Day for 8 turns, burns the target, and the user loses 25% of its maximum HP. If this Pokemon has less than 50% max HP, has 33% recoil.",
+		basePower: 100,
+		accuracy: 100,
+		pp: 5,
+		priority: 0,
+		flags: { protect: 1, metronome: 1, contact: 1 },
+		onTryMove(target, source, move) {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source, move) {
+			this.add('-anim', source, 'Draco Meteor', target);
+			this.add('-anim', source, 'Flare Blitz', target);
+		},
+		onModifyMove(move, pokemon) {
+			if (pokemon.hp >= pokemon.maxhp / 2) {
+				move.status = 'brn';
+				move.weather = 'sunnyday';
+				move.priority = -6;
+				move.onAfterHit = function (t, s, m) {
+					this.damage(s.maxhp / 4, s);
+				};
+			} else {
+				move.recoil = [33, 100];
+			}
+		},
+		secondary: null,
+		type: "Fire",
+		target: "normal",
+	},
 	// Lyssa
 	masochism: {
 		name: "Masochism",
@@ -68,8 +191,8 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			source.setItem(item);
 		},
 		secondary: null,
-		target: "normal",
 		type: "Fighting",
+		target: "normal",
 	},
 	// Cinque
 	homerunswing: {
@@ -83,6 +206,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		priority: 6,
 		pp: 5,
 		isZ: "moogleplushie",
+		ignoreImmunity: true,
 		flags: { contact: 1 },
 		onTryMove(target, source, move) {
 			this.attrLastMove('[still]');
@@ -121,12 +245,11 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			pokemon.abilityState.windup = 0;
 		},
 		secondary: null,
-		target: "normal",
 		type: "Ground",
+		target: "normal",
 	},
 	homerunswingwindup: {
 		name: "Homerun Swing - Windup",
-		// This is a Status move in disguise
 		category: "Physical",
 		basePower: 0,
 		accuracy: true,
@@ -181,7 +304,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		gen: 9,
 		pp: 64,
 		noPPBoosts: true,
-		flags: { protect: 1 },
+		flags: { protect: 1, failmefirst: 1, nosleeptalk: 1, noassist: 1, failcopycat: 1, failinstruct: 1 },
 		priority: 0,
 		onTryMove() {
 			this.attrLastMove('[still]');
@@ -643,6 +766,8 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 	},
 	wuji: {
 		name: "Wuji",
+		desc: "User focuses, then hits last, causing the target to recharge. Fails if the user is not attacked while charging.",
+		shortDesc: "User focuses, then hits last if damaged first.",
 		basePower: 80,
 		category: "Physical",
 		accuracy: true,
@@ -743,7 +868,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		flags: {},
 		accuracy: 85,
 		pp: 5,
-		desc: "Badly poisons the foe, always starting at the third stage, regardless of its typing. Replaces existing status conditions.",
+		desc: "Badly poisons the foe, always starting at the fourth stage, regardless of its typing. Replaces existing status conditions.",
 		shortDesc: "Very badly poisons the target. Ignores immunities.",
 		ignoreImmunity: true,
 		onTryMove() {
@@ -754,7 +879,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			this.add('-anim', source, 'Strength Sap', target);
 		},
 		onHit(target, source, move) {
-			target.setStatus('tox', source, move.id, true);
+			target.setStatus('tox', source, move, true);
 		},
 		// Stage advancement handled in ../../../conditions.ts
 		secondary: null,
@@ -849,17 +974,16 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		},
 		condition: {
 			onStart(pokemon) {
-				pokemon.volatiles['planetbefall'].turns = 0;
 				this.add('-start', pokemon, 'Planet Befall', '[silent]');
 				this.add('-message', `${pokemon.name} was petrified!`);
 				if (!pokemon.hasType('Rock') && pokemon.addType('Rock')) this.add('-start', pokemon, 'typeadd', 'Rock', '[from] move: Planet Befall');
 			},
 			onResidual(pokemon) {
 				this.add('-message', `${pokemon.name} is petrified!`);
-				pokemon.volatiles['planetbefall'].turns++;
 			},
-			onTryMove(attacker, defender, move) {
-				this.add('-message', `${attacker.name} is too petrified to move!`);
+			onBeforeMovePriority: 2,
+			onBeforeMove(pokemon, target, move) {
+				this.add('-message', `${pokemon.name} couldn't move!`);
 				return false;
 			},
 			onDamagingHit(damage, target, source, move) {
@@ -1324,58 +1448,6 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		target: "self",
 		type: "Grass",
 	},
-	// Codie
-	Cascade: {
-		accuracy: true,
-		basePower: 0,
-		category: "Status",
-		desc: "Randomly selects and uses a supereffective Special move learned by an ally, if present. Otherwise, uses a random Special move learned by an ally. Fails if the user has no allies with Special attacking moves. 30% chance to change the target's typing to match the type of the move selected. Can only be used once per switch-in.",
-		shortDesc: "Uses supereffective move learned by ally. Breaks protection. Once per switch.",
-		name: "Cascade",
-		pp: 8,
-		noPPBoosts: true,
-		priority: 0,
-		flags: { protect: 1 },
-		onTryHit() {
-			this.attrLastMove('[still]');
-		},
-		onPrepareHit(target, source, move) {
-			this.add('-anim', source, 'Aurora Beam', source);
-			this.add('-anim', source, 'Geomancy', source);
-			let SEMoves = [];
-			let otherMoves = [];
-			for (const ally of source.side.pokemon) {
-				if (ally === source) continue;
-				for (const moveSlot of ally.moveSlots) {
-					const moveid = moveSlot.id;
-					const movedata = this.dex.moves.get(moveid);
-					if (movedata.category === 'Special' && target.runEffectiveness(movedata) > 0) {
-						SEMoves.push(moveid);
-					} else {
-						if (movedata.category === 'Special') otherMoves.push(moveid);
-					}
-				}
-			}
-			if (!SEMoves.length && !otherMoves.length) return null;
-			let randomMove;
-			if (SEMoves.length) {
-				randomMove = this.sample(SEMoves);
-			} else {
-				randomMove = this.sample(otherMoves);
-			}
-			this.actions.useMove(randomMove, source, target);
-			if (this.randomChance(3, 10)) {
-				target.setType(this.dex.moves.get(randomMove).type);
-				this.add('-start', target, 'typechange', this.dex.moves.get(randomMove).type);
-			}
-		},
-		onHit(target, source, move) {
-			source.abilityState.cascaded = true;
-		},
-		secondary: null,
-		target: "normal",
-		type: "???",
-	},
 	// Sakuya Izayoi
 	misdirection: {
 		accuracy: true,
@@ -1574,20 +1646,6 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		type: "Steel",
 	},
 	// Zeeb
-	slingshot: {
-		accuracy: true,
-		basePower: 20,
-		category: "Physical",
-		name: "Slingshot",
-		pp: 24,
-		noPPBoosts: true,
-		priority: 0,
-		flags: { protect: 1 },
-		secondary: null,
-		type: "Normal",
-		target: "normal",
-	},
-	// Zeeb
 	superknuckleshuffle: {
 		accuracy: 90,
 		basePower: 10,
@@ -1613,22 +1671,22 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			switch (move.hit) {
 				case 1:
 					power = 10;
-					this.add('-anim', pokemon, 'Headbutt', target);
+					this.add('-anim', pokemon, 'Body Slam', target);
 					break;
 				case 2:
 					power = 20;
 					this.add('-anim', pokemon, 'Rock Tomb', pokemon);
-					this.add('-anim', pokemon, 'Headbutt', target);
+					this.add('-anim', pokemon, 'Accelerock', target);
 					break;
 				case 3:
 					power = 40;
 					this.add('-anim', pokemon, 'Shift Gear', pokemon);
-					this.add('-anim', pokemon, 'Headbutt', target);
+					this.add('-anim', pokemon, 'Steel Wing', target);
 					break;
 				case 4:
 					power = 80;
 					this.add('-anim', pokemon, 'Eruption', pokemon);
-					this.add('-anim', pokemon, 'Headbutt', target);
+					this.add('-anim', pokemon, 'Blaze Kick', target);
 					break;
 			}
 			return power;
@@ -2545,7 +2603,6 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		condition: {
 			duration: 5,
 			onStart(pokemon) {
-				this.add('-start', pokemon, 'Move: Emergency Upgrades');
 				this.add('-message', `${pokemon.name} made emergency upgrades!`);
 			},
 			onResidual(pokemon) {
