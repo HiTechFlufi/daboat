@@ -1051,7 +1051,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			onTryPrimaryHit(target, source, move) {
 				// @ts-ignore
 				let originalDamage = this.actions.getDamage(source, target, move);
-				if (target === source || move.infiltrates || move.category === 'Status') return;
+				if (target === source || move.infiltrates || move.category === 'Status' || move.id === 'homerunswingwindup') return;
 				if (!this.dex.getImmunity(move.type, 'Ground')) {
 					this.add('-immune', target);
 					return null;
