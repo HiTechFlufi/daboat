@@ -3291,10 +3291,9 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		name: "Dynamite Arrow",
 		gen: 9,
 		pp: 40,
-		noPPBoosts: true,
 		priority: 0,
 		sideCondition: 'dynamitearrow',
-		flags: { mirror: 1, protect: 1, futuremove: 1 },
+		flags: { mirror: 1, protect: 1, futuremove: 1, failmefirst: 1, nosleeptalk: 1, noassist: 1, failcopycat: 1, failinstruct: 1 },
 		condition: {
 			duration: 2,
 			onSideStart(targetSide) {
@@ -3315,10 +3314,9 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 					source = possibleSources[0];
 				}
 				const move = this.dex.getActiveMove('dynamitearrow');
-				// @ts-ignore
 				const dmg = this.actions.getDamage(source, pokemon, move);
-				this.damage(dmg, pokemon);
-				this.boost({ def: -1, spe: -1 }, pokemon);
+				this.damage(dmg, pokemon, source, move);
+				this.boost({ spe: -1 }, pokemon, source, move);
 				this.add('-sideend', targetSide, 'Dynamite Arrow', '[silent]');
 			},
 		},
