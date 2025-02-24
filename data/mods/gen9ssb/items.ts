@@ -539,34 +539,13 @@ export const Items: { [k: string]: ModdedItemData } = {
 	slingshot: {
 		name: "Slingshot",
 		gen: 9,
-		onStart(pokemon) {
-			const target = pokemon.side.foe.active[pokemon.side.foe.active.length - 1 - pokemon.position];
-			const move = this.dex.getActiveMove('populationbomb');
-			const dmg = this.actions.getDamage(pokemon, target, move);
-			const hits = this.random(2, 3);
-			for (let i = 0; i < hits; i++) {
-				if (this.randomChance(1, 10)) {
-					this.add('-anim', pokemon, 'Bullet Seed', pokemon);
-					this.add('-anim', pokemon, 'Wake-Up Slap', pokemon);
-					this.add('-message', `${pokemon.name}! Turn the Slingshot the other way!`);
-					this.damage(dmg, pokemon, pokemon);
-					continue;
-				}
-				this.add('-anim', pokemon, 'Bullet Seed', target);
-				this.damage(dmg, target, pokemon);
-				if (dmg && dmg > 0 && this.randomChance(1, 10)) target.addVolatile('flinch');
-			}
-		},
+		shortDesc: "Target loses 1/16 max HP after the holder attacks.",
+		desc: "After the holder successfully uses an attacking move, if the target is not affected by Substitute, Killing Doll, Orb Shield, or Jade Shield, the target loses 1/16 of its max HP.",
 		onAfterMoveSecondarySelf(source, target, move) {
-			if (source === target || move.category === 'Status' || !target || target.fainted) return;
-			const base = this.dex.getActiveMove('populationbomb');
-			const dmg = this.actions.getDamage(source, target, base);
-			const hits = this.random(2, 3);
-			for (let i = 0; i < hits; i++) {
-				this.add('-anim', source, 'Bullet Seed', target);
-				this.damage(dmg, target, source);
-				if (this.randomChance(1, 10)) target.addVolatile('flinch');
-			}
+			const hitSub = target.volatiles['substitute'] || target.volatiles['killingdoll'] || target.volatiles['orbshield'] || target.side.sideConditions['jadeshield'];
+			if (source === target || move.category === 'Status' || !target || target.fainted || hitSub) return;
+			this.add('-anim', source, 'Bullet Seed', target);
+			this.damage(target.maxhp / 16, target, source, this.dex.items.get('slingshot'));
 		},
 	},
 	// Shifu Robot
