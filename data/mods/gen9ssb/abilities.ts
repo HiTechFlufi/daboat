@@ -1451,8 +1451,8 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	batterylife: {
 		name: "Battery Life",
 		gen: 9,
-		shortDesc: "See '/ssb Cyclommatic Cell' for more!",
-		desc: "Look at discord pins man idk im not typing this shit",
+		shortDesc: "Stores charge to power up Electric moves/Techno Blast.",
+		desc: "This Pokemon stores up to five gauges of charge, starting at five at the start of battle. This Pokemon uses charge gauges to power up Electric moves and Techno Blast. Opposing Electric moves heal the user for 1/4 max HP and increase charge gauges; Electric immunity. Sets Electric Terrain and must recharge if the user runs out of charge gauges. Electric moves and Techno Blast fail if the user does not have enough charge gauges stored.",
 		onStart(pokemon) {
 			if (pokemon.abilityState.gauges === undefined) pokemon.abilityState.gauges = 5;
 		},
@@ -1647,7 +1647,8 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	},
 	// Prince Smurf
 	quickcamo: {
-		shortDesc: "Changes type to resist move before hit + Protean. First move slot always stab.",
+		shortDesc: "Changes type to resist move before hit + Protean. First move slot is STAB.",
+		desc: "This Pokemon changes type to match the type of the attack it is currently using, and changes type to resist incoming attacks. This Pokemon's first moveslot changes type to match the user's primary type.",
 		name: "Quick Camo",
 		onTryHit(target, source, move) {
 			if (target === source) return;
@@ -1690,7 +1691,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	// Kozuchi
 	scrapworker: {
 		desc: "1.1x Accuracy. Reduces damage from Physical Attacks by 75% and Special Attacks by 30%. Loses 25% for Physical and 10% for Special with each attack received.",
-		shortdesc: "1.1x Accuracy. 75% Damage Reduction vs Physical and 30% vs Special. Loses 1/3rd damage reduction when attacked.",
+		shortdesc: "1.1x ACC; +75% DEF/+30% SPD. -33% damage reduction when hit.",
 		onStart(pokemon) {
 			if (!pokemon.abilityState.armor && !pokemon.abilityState.usedArmor) {
 				this.add('-activate', pokemon, 'ability: Scrapworker');
@@ -1840,8 +1841,8 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	// Gizmo
 	headonbattery: {
 		name: "Head-On Battery",
-		desc: "Allows this Pokemon to use Charge up to three times. Deals (100HP*number of charges) damage to target after reaching three charges. 12.5-25% recoil. Forces user to switch to a random ally. Increases Attack and Speed by 50% for each charge this Pokemon has.",
-		shortDesc: "See '/ssb Gizmo' for more!",
+		desc: "Allows this Pokemon to use Charge up to three times. Deals (100HP*number of charges) damage to target after reaching three charges. Forces user to switch to a random ally. Increases Attack and Speed by 50% for each charge this Pokemon has.",
+		shortDesc: "User can Charge 3x. +50% ATK/SPE for each charge.",
 		onStart(pokemon) {
 			if (pokemon.abilityState.recallActive && !pokemon.item) {
 				pokemon.setItem('inconspicuouscoin');
@@ -1955,7 +1956,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 	absolutezen: {
 		name: "Absolute Zen",
 		desc: "This Pokemon cannot be taunted, confused, or infatuated, and at the end of every turn, restores HP equal to 1/5 of the total damage dealt to this Pokemon this turn.",
-		shortDesc: "Immune to Taunt/Confusion/Infatuation; Heals 1/4 total damage taken at end of turn.",
+		shortDesc: "Immune to Taunt/Confuse/Attract; Heals 1/4 damage taken.",
 		gen: 9,
 		// Damage Recovery
 		onDamagePriority: 1,
