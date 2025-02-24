@@ -2396,19 +2396,19 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		name: "Orb Shield",
 		pp: 5,
 		priority: 4,
-		flags: { cantusetwice: 1, snatch: 1 },
+		flags: { cantusetwice: 1, snatch: 1, metronome: 1 },
 		volatileStatus: 'orbshield',
 		onTryMove() {
 			this.attrLastMove('[still]');
 		},
 		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Defense Curl', source);
-			this.add('-anim', source, 'Protect', source);
+			this.add('-anim', target, 'Psychic Terrain');
+			this.add('-anim', target, 'Nature\'s Madness', target);
 		},
 		condition: {
 			duration: 1,
 			onStart(target, source, effect) {
-				this.add('-start', target, 'Orb Shield');
+				this.add('-message', `${target.name} shielded themselves!`);
 				target.abilityState.orbHp = Math.floor(target.maxhp / 4);
 				if (target.volatiles['partiallytrapped']) {
 					this.add('-end', target, target.volatiles['partiallytrapped'].sourceEffect, '[partiallytrapped]', '[silent]');
@@ -2418,7 +2418,6 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			onTryPrimaryHitPriority: -1,
 			onTryPrimaryHit(target, source, move) {
 				if (target === source || move.flags['bypasssub'] || move.infiltrates || !target.abilityState.orbHp) return;
-				// @ts-ignore
 				const damage = this.actions.getDamage(source, target, move);
 				if (!damage) {
 					this.add('-message', `${target.name} was protected by Orb Shield!`);
@@ -2426,21 +2425,24 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 				}
 				if (damage < target.abilityState.orbHp) {
 					target.abilityState.orbHp -= damage;
-					this.add('-activate', target, 'move: Orb Shield', '[damage]');
+					this.add('-message', `${target.name} was protected by Orb Shield!`);
 				} else if (damage >= target.abilityState.orbHp) {
 					target.abilityState.orbHp = 0;
 					target.removeVolatile('orbshield');
-					this.add('-message', `${target.name}'s Orb Shield broke!`);
+					this.add('-anim', target, 'Cosmic Power');
+					this.add('-message', `${target.name}'s Orb Shield shattered!`);
 				}
 				if (move.recoil || move.id === 'chloroblast') this.damage(this.actions.calcRecoilDamage(damage, move, source), source, target, 'recoil');
 				if (move.drain) this.heal(Math.ceil(damage * move.drain[0] / move.drain[1]), source, target, 'drain');
 				return null;
 			},
 			onEnd(pokemon) {
-				const target = pokemon.side.foe.active[pokemon.side.foe.active.length - 1 - pokemon.position];
-				if (pokemon.abilityState.orbHp) this.damage(80, target, pokemon);
-				this.add('-end', pokemon, 'Orb Shield');
-				pokemon.abilityState.orbHp = 0;
+				if (pokemon.abilityState.orbHp) {
+					pokemon.abilityState.orbHp = 0;
+					const target = pokemon.side.foe.active[pokemon.side.foe.active.length - 1 - pokemon.position];
+					this.add('-anim', pokemon, 'Psystrike', target);
+					this.damage(80, target, pokemon, this.dex.moves.get('orbshield'));
+				}
 			},
 		},
 		secondary: null,
