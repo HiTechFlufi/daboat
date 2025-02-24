@@ -43,6 +43,14 @@ export const Pokedex: { [k: string]: ModdedSpeciesData } = {
 		abilities: { 0: "Auto Repair" },
 		baseStats: { hp: 81, atk: 120, def: 75, spa: 120, spd: 75, spe: 99 },
 	},
+	magearna: {
+		inherit: true,
+		abilities: {0: "The World"},
+	},
+	necrozma: {
+		inherit: true,
+		abilities: { 0: "Blinding Light" },
+	},
 	necrozmaultra: {
 		inherit: true,
 		types: ['Light'],
