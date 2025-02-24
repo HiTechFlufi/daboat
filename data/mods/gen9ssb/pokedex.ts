@@ -6,6 +6,14 @@ export const Pokedex: { [k: string]: ModdedSpeciesData } = {
 		baseStats: {hp: 100, atk: 100, def: 100, spa: 100, spd: 100, spe: 100}, // the base stats for the pokemon
 	},
 	*/
+	revavroom: {
+		inherit: true,
+		abilities: { 0: "Chain Drift"},
+	},
+	marowak: {
+		inherit: true,
+		abilities: { 0: "Cheerleader" },
+	},
 	skuntank: {
 		inherit: true,
 		abilities: { 0: "Venom Shock" },
@@ -69,16 +77,6 @@ export const Pokedex: { [k: string]: ModdedSpeciesData } = {
 	zapdos: {
 		inherit: true,
 		abilities: { 0: "Peal of Thunder" },
-	},
-	mimikyu: {
-		inherit: true,
-		baseStats: { hp: 75, atk: 90, def: 80, spa: 105, spd: 105, spe: 96 },
-		abilities: { 0: "Dollkeeper" },
-	},
-	mimikyubusted: {
-		inherit: true,
-		baseStats: { hp: 75, atk: 90, def: 105, spa: 50, spd: 105, spe: 96 },
-		abilities: { 0: "Dollkeeper" },
 	},
 	kecleon: {
 		inherit: true,
