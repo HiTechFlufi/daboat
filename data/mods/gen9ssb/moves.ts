@@ -1790,12 +1790,12 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		basePower: 80,
 		category: "Special",
 		name: "Rainbow Maxifier",
-		shortDesc: "Water: +Fire-type; Light-type if transformed. Starts Rainbow.",
-		desc: "If this move is Water-type, Fire-type is added to its type effectiveness. If used by Necrozma-Ultra, this move becomes Light-type instead. Starts a rainbow on the user's side upon hitting. 30% chance to burn. 30% chance to reduce the target's Attack and Special Attack by 1 stage.",
+		shortDesc: "Ultra: Light. +Fire. Rainbow. 30% BRN/-1 ATK/SPA.",
+		desc: "Fire-type is added to this move's type effectiveness. If used by Necrozma-Ultra, this move becomes Light-type instead. Starts a rainbow on the user's side upon hitting. 30% chance to burn. 30% chance to reduce the target's Attack and Special Attack by 1 stage.",
 		pp: 16,
 		noPPBoosts: true,
 		priority: 0,
-		flags: { protect: 1 },
+		flags: { protect: 1, mirror: 1, metronome: 1 },
 		drain: [1, 2],
 		secondaries: [
 			{
@@ -1838,6 +1838,8 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		basePower: 170,
 		category: "Special",
 		name: "Polaris",
+		shortDesc: "Burns the target. If Necrozma, becomes Necrozma-Ultra.",
+		desc: "After damage is dealt, if this move was used by a Necrozma, it transforms into Necrozma-Ultra. 100% chance to burn the target.",
 		pp: 1,
 		isZ: "spectralprism",
 		priority: 0,
@@ -1850,12 +1852,9 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		},
 		onPrepareHit(target, source) {
 			this.add('-anim', source, 'Light That Burns the Sky', target);
-			this.add('-anim', source, 'Flash', target);
 		},
 		onAfterMove(pokemon, target, move) {
 			if (pokemon.species.id === 'necrozma') changeSet(this, pokemon, ssbSets['Luminous-N'], true);
-			pokemon.setAbility('blindinglight');
-			this.add('-anim', pokemon, 'Flash', pokemon);
 			for (const targetPokemon of this.getAllActive()) {
 				if (pokemon === targetPokemon) continue;
 				targetPokemon.addVolatile('blindinglight');
