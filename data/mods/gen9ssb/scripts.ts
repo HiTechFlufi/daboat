@@ -1,12 +1,13 @@
-import type { SSBSet } from "./random-teams";
-import type { ChosenAction } from '../../../sim/side';
-import { FS } from '../../../lib';
-import { toID } from '../../../sim/dex-data';
-import { type SwitchAction } from "../../../sim/battle-queue";
+import {SSBSet} from "./random-teams";
+import {ssbSets} from "./random-teams";
+import {ChosenAction} from '../../../sim/side';
+import {FS} from '../../../lib';
+import {toID} from '../../../sim/dex-data';
+import {changeSet, getName, enemyStaff, PSEUDO_WEATHERS} from "./scripts";
 
 // Similar to User.usergroups. Cannot import here due to users.ts requiring Chat
 // This also acts as a cache, meaning ranks will only update when a hotpatch/restart occurs
-const usergroups: { [userid: string]: string } = {};
+const usergroups: {[userid: string]: string} = {};
 const usergroupData = FS('config/usergroups.csv').readIfExistsSync().split('\n');
 for (const row of usergroupData) {
 	if (!toID(row)) continue;
@@ -16,7 +17,7 @@ for (const row of usergroupData) {
 	usergroups[toID(cells[0])] = cells[1].trim() || ' ';
 }
 
-const roomauth: { [roomid: string]: { [userid: string]: string } } = {};
+const roomauth: {[roomid: string]: {[userid: string]: string}} = {};
 /**
  * Given a username and room, returns the auth they have in that room. Used for some conditional messages/effects.
  * Each room is cached on the first call until the process is restarted.
@@ -39,7 +40,7 @@ export function getName(name: string): string {
 	let group = usergroups[userid] || ' ';
 	if (name === 'Artemis') group = '@';
 	if (name === 'Jeopard-E' || name === 'Ice Kyubs') group = '*';
-	return `${Math.floor(Date.now() / 1000)}|${group}${name}`;
+	return Math.floor(Date.now() / 1000) + '|' + group + name;
 }
 
 export function enemyStaff(pokemon: Pokemon): string {
@@ -77,7 +78,7 @@ export function changeSet(context: Battle, pokemon: Pokemon, newSet: SSBSet, cha
 	const oldGender = pokemon.set.gender;
 	if ((pokemon.set.gender !== newSet.gender) && !Array.isArray(newSet.gender)) {
 		pokemon.set.gender = newSet.gender;
-		// @ts-expect-error Shut up sharp_claw wanted this
+		// @ts-ignore Shut up sharp_claw wanted this
 		pokemon.gender = newSet.gender;
 	}
 	const oldShiny = pokemon.set.shiny;
@@ -86,13 +87,17 @@ export function changeSet(context: Battle, pokemon: Pokemon, newSet: SSBSet, cha
 	if (newSet.species === 'Shedinja') percent = 1;
 	pokemon.formeChange(newSet.species, context.effect, true);
 	if (!pokemon.terastallized && newSet.teraType) {
-		const allTypes = context.dex.types.names();
-		pokemon.teraType = newSet.teraType === 'Any' ? context.sample(allTypes) :
-			Array.isArray(newSet.teraType) ? context.sample(newSet.teraType) : newSet.teraType;
+		const allTypes = context.dex.types.all().map(x => x.name);
+		pokemon.teraType = newSet.teraType === 'Any' ?
+			allTypes[Math.floor(Math.random() * allTypes.length)] :
+			Array.isArray(newSet.teraType) ?
+				newSet.teraType[Math.floor(Math.random() * newSet.teraType.length)] :
+				newSet.teraType;
 	}
-	const details = pokemon.getUpdatedDetails();
+	const details = pokemon.species.name + (pokemon.level === 100 ? '' : ', L' + pokemon.level) +
+		(pokemon.gender === '' ? '' : ', ' + pokemon.gender) + (pokemon.set.shiny ? ', shiny' : '');
 	if (oldShiny !== pokemon.set.shiny || oldGender !== pokemon.gender) context.add('replace', pokemon, details);
-	if (changeAbility) pokemon.setAbility(newSet.ability as string, undefined, undefined, true);
+	if (changeAbility) pokemon.setAbility(newSet.ability as string, undefined, true);
 
 	pokemon.baseMaxhp = pokemon.species.name === 'Shedinja' ? 1 : Math.floor(Math.floor(
 		2 * pokemon.species.baseStats.hp + pokemon.set.ivs.hp + Math.floor(pokemon.set.evs.hp / 4) + 100
@@ -145,8 +150,9 @@ export function changeMoves(context: Battle, pokemon: Pokemon, newMoves: (string
 		const moveSlot = {
 			move: move.name,
 			id: move.id,
-			pp: Math.floor((move.noPPBoosts ? move.pp : move.pp * 8 / 5) * carryOver[slot]),
-			maxpp: (move.noPPBoosts ? move.pp : move.pp * 8 / 5),
+			// eslint-disable-next-line max-len
+			pp: ((move.noPPBoosts || move.isZ) ? Math.floor(move.pp * carryOver[slot]) : Math.floor((move.pp * (8 / 5)) * carryOver[slot])),
+			maxpp: ((move.noPPBoosts || move.isZ) ? move.pp : move.pp * 8 / 5),
 			target: move.target,
 			disabled: false,
 			disabledSource: '',
@@ -170,9 +176,9 @@ export const Scripts: ModdedBattleScriptsData = {
 		if (!target?.hp) return 0;
 		if (!target.isActive) return false;
 		if (this.gen > 5 && !target.side.foePokemonLeft()) return false;
-		boost = this.runEvent('ChangeBoost', target, source, effect, { ...boost });
+		boost = this.runEvent('ChangeBoost', target, source, effect, {...boost});
 		boost = target.getCappedBoost(boost);
-		boost = this.runEvent('TryBoost', target, source, effect, { ...boost });
+		boost = this.runEvent('TryBoost', target, source, effect, {...boost});
 		let success = null;
 		let boosted = isSecondary;
 		let boostName: BoostID;
@@ -295,7 +301,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			faintData = this.faintQueue.shift()!;
 			const pokemon: Pokemon = faintData.target;
 			if (!pokemon.fainted &&
-				this.runEvent('BeforeFaint', pokemon, faintData.source, faintData.effect)) {
+					this.runEvent('BeforeFaint', pokemon, faintData.source, faintData.effect)) {
 				if (!pokemon.isActive) {
 					this.add('message', `${pokemon.name} was killed by ${pokemon.side.name}!`);
 					// TODO: Custom Protocol needed for teambar update
@@ -323,7 +329,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			this.queue.clear();
 			// Fainting clears accumulated Bide damage
 			for (const pokemon of this.getAllActive()) {
-				if (pokemon.volatiles['bide']?.damage) {
+				if (pokemon.volatiles['bide'] && pokemon.volatiles['bide'].damage) {
 					pokemon.volatiles['bide'].damage = 0;
 					this.hint("Desync Clause Mod activated!");
 					this.hint("In Gen 1, Bide's accumulated damage is reset to 0 when a Pokemon faints.");
@@ -360,7 +366,7 @@ export const Scripts: ModdedBattleScriptsData = {
 		if (move.id === 'wonderwing') return false;
 		return !!move.flags['contact'];
 	},
-	// Fake switch needed for HiZo's Scapegoat
+	// Fake switch needed for Flufi's EpiPen & Marvin's Mimic
 	runAction(action) {
 		const pokemonOriginalHP = action.pokemon?.hp;
 		let residualPokemon: (readonly [Pokemon, number])[] = [];
@@ -369,7 +375,6 @@ export const Scripts: ModdedBattleScriptsData = {
 		case 'start': {
 			for (const side of this.sides) {
 				if (side.pokemonLeft) side.pokemonLeft = side.pokemon.length;
-				this.add('teamsize', side.id, side.pokemon.length);
 			}
 
 			this.add('start');
@@ -386,11 +391,12 @@ export const Scripts: ModdedBattleScriptsData = {
 				const species = pokemon.setSpecies(rawSpecies);
 				if (!species) continue;
 				pokemon.baseSpecies = rawSpecies;
-				pokemon.details = pokemon.getUpdatedDetails();
-				// pokemon.setAbility(species.abilities['0'], null, null, true);
+				pokemon.details = species.name + (pokemon.level === 100 ? '' : ', L' + pokemon.level) +
+					(pokemon.gender === '' ? '' : ', ' + pokemon.gender) + (pokemon.set.shiny ? ', shiny' : '');
+				// pokemon.setAbility(species.abilities['0'], null, true);
 				// pokemon.baseAbility = pokemon.ability;
 
-				const behemothMove: { [k: string]: string } = {
+				const behemothMove: {[k: string]: string} = {
 					'Zacian-Crowned': 'behemothblade', 'Zamazenta-Crowned': 'behemothbash',
 				};
 				const ironHead = pokemon.baseMoves.indexOf('ironhead');
@@ -399,8 +405,8 @@ export const Scripts: ModdedBattleScriptsData = {
 					pokemon.baseMoveSlots[ironHead] = {
 						move: move.name,
 						id: move.id,
-						pp: move.noPPBoosts ? move.pp : move.pp * 8 / 5,
-						maxpp: move.noPPBoosts ? move.pp : move.pp * 8 / 5,
+						pp: (move.noPPBoosts || move.isZ) ? move.pp : move.pp * 8 / 5,
+						maxpp: (move.noPPBoosts || move.isZ) ? move.pp : move.pp * 8 / 5,
 						target: move.target,
 						disabled: false,
 						disabledSource: '',
@@ -410,11 +416,11 @@ export const Scripts: ModdedBattleScriptsData = {
 				}
 			}
 
-			this.format.onBattleStart?.call(this);
+			if (this.format.onBattleStart) this.format.onBattleStart.call(this);
 			for (const rule of this.ruleTable.keys()) {
 				if ('+*-!'.includes(rule.charAt(0))) continue;
 				const subFormat = this.dex.formats.get(rule);
-				subFormat.onBattleStart?.call(this);
+				if (subFormat.onBattleStart) subFormat.onBattleStart.call(this);
 			}
 
 			for (const side of this.sides) {
@@ -461,6 +467,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			this.debug('before turn callback: ' + action.move.id);
 			const target = this.getTarget(action.pokemon, action.move, action.targetLoc);
 			if (!target) return false;
+			
 			if (!action.move.beforeTurnCallback) throw new Error(`beforeTurnMove has no beforeTurnCallback`);
 			action.move.beforeTurnCallback.call(this, action.pokemon, target);
 			break;
@@ -524,27 +531,34 @@ export const Scripts: ModdedBattleScriptsData = {
 			this.add('-heal', action.target, action.target.getHealth, '[from] move: Revival Blessing');
 			action.pokemon.side.removeSlotCondition(action.pokemon, 'revivalblessing');
 			break;
-		// @ts-expect-error I'm sorry but it takes a lot
-		case 'scapegoat':
-			action = action as SwitchAction;
-			const percent = (action.target.hp / action.target.baseMaxhp) * 100;
-			// TODO: Client support for custom faint
-			action.target.faint();
-			if (percent > 66) {
-				this.add('message', `Your courage will be greatly rewarded.`);
-				this.boost({ atk: 4, spa: 4, spe: 4 }, action.pokemon, action.pokemon, this.dex.moves.get('scapegoat') as any);
-			} else if (percent > 33) {
-				this.add('message', `Your offering was accepted.`);
-				this.boost({ atk: 3, spa: 3, spe: 3 }, action.pokemon, action.pokemon, this.dex.moves.get('scapegoat') as any);
-			} else {
-				this.add('message', `Coward.`);
-				this.boost({ atk: 2, spa: 2, spe: 2 }, action.pokemon, action.pokemon, this.dex.moves.get('scapegoat') as any);
+		// @ts-ignore I'm sorry but it takes a lot
+		case 'epipen':
+			let newHP = action.target.hp + (action.target.maxhp * 0.75);
+			if (newHP > action.target.maxhp) newHP = action.target.maxhp;
+			action.target.hp = newHP;
+			action.target.sethp(newHP);
+			action.target.cureStatus();
+			this.add('-message', `${action.pokemon.name}'s EpiPen restored ${action.target.name}'s health!`);
+			action.pokemon.side.removeSlotCondition(action.pokemon, 'epipen');
+			break;
+		case 'mimic':
+			if (action.pokemon.transformInto(action.target, this.dex.abilities.get('murderousmimic'))) {
+				action.pokemon.formeChange(action.target.species.name);
+				this.add('-message', `${action.pokemon.name} mimicked its ally, ${action.target.name}!`);
 			}
-			this.add(`c:|${getName((action.pokemon.illusion || action.pokemon).name)}|Don't worry, if this plan fails we can just blame ${action.target.name}`);
-			action.pokemon.side.removeSlotCondition(action.pokemon, 'scapegoat');
+			//changeSet(this, action.pokemon, ssbSets[action.target.name], true);
+			action.pokemon.side.removeSlotCondition(action.pokemon, 'mimic');
+			break;
+		case 'runUnnerve':
+			this.singleEvent('PreStart', action.pokemon.getAbility(), action.pokemon.abilityState, action.pokemon);
 			break;
 		case 'runSwitch':
 			this.actions.runSwitch(action.pokemon);
+			break;
+		case 'runPrimal':
+			if (!action.pokemon.transformed) {
+				this.singleEvent('Primal', action.pokemon.getItem(), action.pokemon.itemState, action.pokemon);
+			}
 			break;
 		case 'shift':
 			if (!action.pokemon.isActive) return false;
@@ -560,7 +574,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			this.clearActiveMove(true);
 			this.updateSpeed();
 			residualPokemon = this.getAllActive().map(pokemon => [pokemon, pokemon.getUndynamaxedHP()] as const);
-			this.fieldEvent('Residual');
+			this.residualEvent('Residual');
 			this.add('upkeep');
 			break;
 		}
@@ -604,7 +618,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			return false;
 		}
 
-		if (this.gen >= 5 && action.choice !== 'start') {
+		if (this.gen >= 5) {
 			this.eachEvent('Update');
 			for (const [pokemon, originalHP] of residualPokemon) {
 				const maxhp = pokemon.getUndynamaxedHP(pokemon.maxhp);
@@ -629,10 +643,9 @@ export const Scripts: ModdedBattleScriptsData = {
 			let reviveSwitch = false; // Used to ignore the fake switch for Revival Blessing
 			if (switches[i] && !this.canSwitch(this.sides[i])) {
 				for (const pokemon of this.sides[i].active) {
-					if (
-						this.sides[i].slotConditions[pokemon.position]['revivalblessing'] ||
-						this.sides[i].slotConditions[pokemon.position]['scapegoat']
-					) {
+					if (this.sides[i].slotConditions[pokemon.position]['revivalblessing'] ||
+							this.sides[i].slotConditions[pokemon.position]['epipen'] ||
+						 	this.sides[i].slotConditions[pokemon.position]['mimic']) {
 						reviveSwitch = true;
 						continue;
 					}
@@ -642,7 +655,7 @@ export const Scripts: ModdedBattleScriptsData = {
 			} else if (switches[i]) {
 				for (const pokemon of this.sides[i].active) {
 					if (pokemon.hp && pokemon.switchFlag && pokemon.switchFlag !== 'revivalblessing' &&
-						pokemon.switchFlag !== 'scapegoat' && !pokemon.skipBeforeSwitchOutEventFlag) {
+						pokemon.switchFlag !== 'epipen' && pokemon.switchFlag !== 'mimic' && !pokemon.skipBeforeSwitchOutEventFlag) {
 						this.runEvent('BeforeSwitchOut', pokemon);
 						pokemon.skipBeforeSwitchOutEventFlag = true;
 						this.faintMessages(); // Pokemon may have fainted in BeforeSwitchOut
@@ -696,6 +709,13 @@ export const Scripts: ModdedBattleScriptsData = {
 			}
 			if (pokemon.species.name === 'Terapagos-Terastal' && type === 'Stellar') {
 				pokemon.formeChange('Terapagos-Stellar', null, true);
+				pokemon.baseMaxhp = Math.floor(Math.floor(
+					2 * pokemon.species.baseStats['hp'] + pokemon.set.ivs['hp'] + Math.floor(pokemon.set.evs['hp'] / 4) + 100
+				) * pokemon.level / 100 + 10);
+				const newMaxHP = pokemon.baseMaxhp;
+				pokemon.hp = newMaxHP - (pokemon.maxhp - pokemon.hp);
+				pokemon.maxhp = newMaxHP;
+				this.battle.add('-heal', pokemon, pokemon.getHealth, '[silent]');
 			}
 			if (!pokemon.illusion && pokemon.name === 'Neko') {
 				this.battle.add(`c:|${getName('Neko')}|Possible thermal failure if operation continues (Meow on fire ?)`);
@@ -711,8 +731,8 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			if (move.spreadHit) {
 				// multi-target modifier (doubles only)
-				const spreadModifier = this.battle.gameType === 'freeforall' ? 0.5 : 0.75;
-				this.battle.debug(`Spread modifier: ${spreadModifier}`);
+				const spreadModifier = move.spreadModifier || (this.battle.gameType === 'freeforall' ? 0.5 : 0.75);
+				this.battle.debug('Spread modifier: ' + spreadModifier);
 				baseDamage = this.battle.modify(baseDamage, spreadModifier);
 			} else if (move.multihitType === 'parentalbond' && move.hit > 1) {
 				// Parental Bond modifier
@@ -897,20 +917,21 @@ export const Scripts: ModdedBattleScriptsData = {
 			}
 			this.battle.runEvent('BeforeSwitchIn', pokemon);
 			if (sourceEffect) {
-				this.battle.add(isDrag ? 'drag' : 'switch', pokemon, pokemon.getFullDetails, `[from] ${sourceEffect}`);
+				this.battle.add(isDrag ? 'drag' : 'switch', pokemon, pokemon.getDetails, '[from] ' + sourceEffect);
 			} else {
-				this.battle.add(isDrag ? 'drag' : 'switch', pokemon, pokemon.getFullDetails);
+				this.battle.add(isDrag ? 'drag' : 'switch', pokemon, pokemon.getDetails);
 			}
-			pokemon.abilityState = this.battle.initEffectState({ id: pokemon.ability, target: pokemon });
-			pokemon.itemState = this.battle.initEffectState({ id: pokemon.item, target: pokemon });
+			pokemon.abilityOrder = this.battle.abilityOrder++;
 			if (isDrag && this.battle.gen === 2) pokemon.draggedIn = this.battle.turn;
 			pokemon.previouslySwitchedIn++;
 
 			if (isDrag && this.battle.gen >= 5) {
 				// runSwitch happens immediately so that Mold Breaker can make hazards bypass Clear Body and Levitate
+				this.battle.singleEvent('PreStart', pokemon.getAbility(), pokemon.abilityState, pokemon);
 				this.runSwitch(pokemon);
 			} else {
-				this.battle.queue.insertChoice({ choice: 'runSwitch', pokemon });
+				this.battle.queue.insertChoice({choice: 'runUnnerve', pokemon});
+				this.battle.queue.insertChoice({choice: 'runSwitch', pokemon});
 			}
 
 			return true;
@@ -936,7 +957,7 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			pokemon.formeChange(speciesid, pokemon.getItem(), true);
 			if (pokemon.canMegaEvo) {
-				pokemon.canMegaEvo = false;
+				pokemon.canMegaEvo = null;
 			} else {
 				pokemon.canUltraBurst = null;
 			}
@@ -964,23 +985,8 @@ export const Scripts: ModdedBattleScriptsData = {
 				return altForme.name;
 			}
 			// a hacked-in Megazard X can mega evolve into Megazard Y, but not into Megazard X
-			if (Array.isArray(item.megaEvolves)) {
-				if (!Array.isArray(item.megaStone)) {
-					throw new Error(`${item.name}#megaEvolves and ${item.name}#megaStone type mismatch`);
-				}
-				if (item.megaEvolves.length !== item.megaStone.length) {
-					throw new Error(`${item.name}#megaEvolves and ${item.name}#megaStone length mismatch`);
-				}
-				// FIXME: Change to species.name when champions comes
-				const index = item.megaEvolves.indexOf(species.baseSpecies);
-				if (index < 0) return null;
-				return item.megaStone[index];
-				// FIXME: Change to species.name when champions comes
-			} else {
-				if (item.megaEvolves === species.baseSpecies) {
-					if (Array.isArray(item.megaStone)) throw new Error(`${item.name}#megaEvolves and ${item.name}#megaStone type mismatch`);
-					return item.megaStone;
-				}
+			if (item.megaEvolves === species.baseSpecies && item.megaStone !== species.name) {
+				return item.megaStone;
 			}
 			return null;
 		},
@@ -1010,7 +1016,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				if (zMoveName) {
 					const zMove = this.dex.moves.get(zMoveName);
 					if (!zMove.isZ && zMove.category === 'Status') zMoveName = "Z-" + zMoveName;
-					zMoves.push({ move: zMoveName, target: zMove.target });
+					zMoves.push({move: zMoveName, target: zMove.target});
 				} else {
 					zMoves.push(null);
 				}
@@ -1067,11 +1073,11 @@ export const Scripts: ModdedBattleScriptsData = {
 					if (accuracy !== true) {
 						let boost = 0;
 						if (!move.ignoreAccuracy) {
-							const boosts = this.battle.runEvent('ModifyBoost', pokemon, null, null, { ...pokemon.boosts });
+							const boosts = this.battle.runEvent('ModifyBoost', pokemon, null, null, {...pokemon.boosts});
 							boost = this.battle.clampIntRange(boosts['accuracy'], -6, 6);
 						}
 						if (!move.ignoreEvasion) {
-							const boosts = this.battle.runEvent('ModifyBoost', target, null, null, { ...target.boosts });
+							const boosts = this.battle.runEvent('ModifyBoost', target, null, null, {...target.boosts});
 							boost = this.battle.clampIntRange(boost - boosts['evasion'], -6, 6);
 						}
 						if (boost > 0) {
@@ -1082,7 +1088,7 @@ export const Scripts: ModdedBattleScriptsData = {
 					}
 				}
 				if (move.alwaysHit || (move.id === 'toxic' && this.battle.gen >= 8 && pokemon.hasType('Poison')) ||
-					(move.target === 'self' && move.category === 'Status' && !target.isSemiInvulnerable())) {
+						(move.target === 'self' && move.category === 'Status' && !target.isSemiInvulnerable())) {
 					accuracy = true; // bypasses ohko accuracy modifiers
 				} else {
 					accuracy = this.battle.runEvent('Accuracy', target, pokemon, move, accuracy);
@@ -1109,7 +1115,7 @@ export const Scripts: ModdedBattleScriptsData = {
 						}
 					}
 					if (!move.ohko && pokemon.hasItem('blunderpolicy') && pokemon.useItem()) {
-						this.battle.boost({ spe: 2 }, pokemon);
+						this.battle.boost({spe: 2}, pokemon);
 					}
 					hitResults[i] = false;
 					continue;
@@ -1154,7 +1160,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				// THIS IS PURELY A SANITY CHECK
 				// DO NOT TAKE ADVANTAGE OF THIS TO PREVENT A POKEMON FROM MOVING;
 				// USE this.battle.queue.cancelMove INSTEAD
-				this.battle.debug(`${pokemon.id} INCONSISTENT STATE, ALREADY MOVED: ${pokemon.moveThisTurn}`);
+				this.battle.debug('' + pokemon.id + ' INCONSISTENT STATE, ALREADY MOVED: ' + pokemon.moveThisTurn);
 				this.battle.clearActiveMove(true);
 				return;
 			} */
@@ -1208,7 +1214,7 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			const oldActiveMove = move;
 
-			const moveDidSomething = this.useMove(baseMove, pokemon, { target, sourceEffect, zMove, maxMove });
+			const moveDidSomething = this.useMove(baseMove, pokemon, {target, sourceEffect, zMove, maxMove});
 			this.battle.lastSuccessfulMoveThisTurn = moveDidSomething ? this.battle.activeMove && this.battle.activeMove.id : null;
 			if (this.battle.activeMove) move = this.battle.activeMove;
 			this.battle.singleEvent('AfterMove', move, null, pokemon, target, move);
@@ -1228,7 +1234,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				// but before any multipliers like Agility or Choice Scarf
 				// Ties go to whichever Pokemon has had the ability for the least amount of time
 				dancers.sort(
-					(a, b) => -(b.storedStats['spe'] - a.storedStats['spe']) || b.abilityState.effectOrder - a.abilityState.effectOrder
+					(a, b) => -(b.storedStats['spe'] - a.storedStats['spe']) || b.abilityOrder - a.abilityOrder
 				);
 				const targetOf1stDance = this.battle.activeTarget!;
 				for (const dancer of dancers) {
@@ -1239,7 +1245,7 @@ export const Scripts: ModdedBattleScriptsData = {
 						targetOf1stDance :
 						pokemon;
 					const dancersTargetLoc = dancer.getLocOf(dancersTarget);
-					this.runMove(move.id, dancer, dancersTargetLoc, { sourceEffect: dancer.getAbility(), externalMove: true });
+					this.runMove(move.id, dancer, dancersTargetLoc, {sourceEffect: dancer.getAbility(), externalMove: true});
 				}
 			}
 			if (noLock && pokemon.volatiles['lockedmove']) delete pokemon.volatiles['lockedmove'];
@@ -1261,6 +1267,7 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			let move = this.dex.getActiveMove(moveOrMoveName);
 			pokemon.lastMoveUsed = move;
+			pokemon.side.lastMoveUsed = move;
 			if (move.id === 'weatherball' && zMove) {
 				// Z-Weather Ball only changes types if it's used directly,
 				// not if it's called by Z-Sleep Talk or something.
@@ -1284,7 +1291,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				if (!move.hasBounced) move.pranksterBoosted = this.battle.activeMove.pranksterBoosted;
 			}
 			const baseTarget = move.target;
-			let targetRelayVar = { target };
+			let targetRelayVar = {target};
 			targetRelayVar = this.battle.runEvent('ModifyTarget', pokemon, target, move, targetRelayVar, true);
 			if (targetRelayVar.target !== undefined) target = targetRelayVar.target;
 			if (target === undefined) target = this.battle.getRandomTarget(pokemon, move);
@@ -1321,12 +1328,12 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			let movename = move.name;
 			if (move.id === 'hiddenpower') movename = 'Hidden Power';
-			if (sourceEffect) attrs += `|[from] ${sourceEffect.fullname}`;
+			if (sourceEffect) attrs += `|[from]${sourceEffect.fullname}`;
 			if (zMove && move.isZ === true) {
 				attrs = '|[anim]' + movename + attrs;
 				movename = 'Z-' + movename;
 			}
-			this.battle.addMove('move', pokemon, movename, `${target}${attrs}`);
+			this.battle.addMove('move', pokemon, movename, target + attrs);
 
 			if (zMove) this.runZPower(move, pokemon);
 
@@ -1336,7 +1343,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				return false;
 			}
 
-			const { targets, pressureTargets } = pokemon.getMoveTargets(move, target);
+			const {targets, pressureTargets} = pokemon.getMoveTargets(move, target);
 			if (targets.length) {
 				target = targets[targets.length - 1]; // in case of redirection
 			}
@@ -1399,7 +1406,11 @@ export const Scripts: ModdedBattleScriptsData = {
 				return false;
 			}
 
-			if (!(move.hasSheerForce && pokemon.hasAbility('sheerforce')) && !move.flags['futuremove']) {
+			if (
+				!move.negateSecondary &&
+				!(move.hasSheerForce && pokemon.hasAbility('sheerforce')) &&
+				!move.flags['futuremove']
+			) {
 				const originalHp = pokemon.hp;
 				this.battle.singleEvent('AfterMoveSecondarySelf', move, null, pokemon, target, move);
 				this.battle.runEvent('AfterMoveSecondarySelf', pokemon, target, move);
@@ -1471,7 +1482,7 @@ export const Scripts: ModdedBattleScriptsData = {
 					const boostTable = [1, 4 / 3, 5 / 3, 2, 7 / 3, 8 / 3, 3];
 					if (accuracy !== true) {
 						if (!move.ignoreAccuracy) {
-							const boosts = this.battle.runEvent('ModifyBoost', pokemon, null, null, { ...pokemon.boosts });
+							const boosts = this.battle.runEvent('ModifyBoost', pokemon, null, null, {...pokemon.boosts});
 							const boost = this.battle.clampIntRange(boosts['accuracy'], -6, 6);
 							if (boost > 0) {
 								accuracy *= boostTable[boost];
@@ -1480,7 +1491,7 @@ export const Scripts: ModdedBattleScriptsData = {
 							}
 						}
 						if (!move.ignoreEvasion) {
-							const boosts = this.battle.runEvent('ModifyBoost', target, null, null, { ...target.boosts });
+							const boosts = this.battle.runEvent('ModifyBoost', target, null, null, {...target.boosts});
 							const boost = this.battle.clampIntRange(boosts['evasion'], -6, 6);
 							if (boost > 0) {
 								accuracy /= boostTable[boost];
@@ -1519,7 +1530,7 @@ export const Scripts: ModdedBattleScriptsData = {
 					// purposes of Counter, Metal Burst, and Mirror Coat.
 					damage[i] = md === true || !md ? 0 : md;
 					// Total damage dealt is accumulated for the purposes of recoil (Parental Bond).
-					move.totalDamage += damage[i];
+					move.totalDamage += damage[i] as number;
 				}
 				if (move.mindBlownRecoil) {
 					const hpBeforeRecoil = pokemon.hp;
@@ -1559,7 +1570,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				} else {
 					recoilDamage = this.battle.clampIntRange(this.battle.trunc(pokemon.maxhp / 4), 1);
 				}
-				this.battle.directDamage(recoilDamage, pokemon, pokemon, { id: 'strugglerecoil' } as Condition);
+				this.battle.directDamage(recoilDamage, pokemon, pokemon, {id: 'strugglerecoil'} as Condition);
 				if (pokemon.hp <= pokemon.maxhp / 2 && hpBeforeRecoil > pokemon.maxhp / 2) {
 					this.battle.runEvent('EmergencyExit', pokemon, pokemon);
 				}
@@ -1585,9 +1596,9 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			this.battle.eachEvent('Update');
 
-			this.afterMoveSecondaryEvent(targetsCopy.filter(val => !!val), pokemon, move);
+			this.afterMoveSecondaryEvent(targetsCopy.filter(val => !!val) as Pokemon[], pokemon, move);
 
-			if (!(move.hasSheerForce && pokemon.hasAbility('sheerforce'))) {
+			if (!move.negateSecondary && !(move.hasSheerForce && pokemon.hasAbility('sheerforce'))) {
 				for (const [i, d] of damage.entries()) {
 					// There are no multihit spread moves, so it's safe to use move.totalDamage for multihit moves
 					// The previous check was for `move.multihit`, but that fails for Dragon Darts
@@ -1613,13 +1624,11 @@ export const Scripts: ModdedBattleScriptsData = {
 				} else if (!this.battle.singleEvent('TryImmunity', move, {}, target, pokemon, move)) {
 					this.battle.add('-immune', target);
 					hitResults[i] = false;
-				} else if (
-					this.battle.gen >= 7 && move.pranksterBoosted &&
+				} else if (this.battle.gen >= 7 && move.pranksterBoosted &&
 					// Prankster Clone immunity
 					(pokemon.hasAbility('prankster') || pokemon.hasAbility('youkaiofthedusk') ||
 						pokemon.volatiles['irpachuza'] || pokemon.hasAbility('neverendingfhunt')) &&
-						!targets[i].isAlly(pokemon) && !this.dex.getImmunity('prankster', target)
-				) {
+					!targets[i].isAlly(pokemon) && !this.dex.getImmunity('prankster', target)) {
 					this.battle.debug('natural prankster immunity');
 					if (!target.illusion) this.battle.hint("Since gen 7, Dark is immune to Prankster moves.");
 					this.battle.add('-immune', target);
@@ -1640,7 +1649,8 @@ export const Scripts: ModdedBattleScriptsData = {
 			}
 			const move = this.dex.getActiveMove(moveOrMoveName);
 			let hitResult: boolean | number | null = true;
-			const moveData = hitEffect || move;
+			let moveData = hitEffect as ActiveMove;
+			if (!moveData) moveData = move;
 			if (!moveData.flags) moveData.flags = {};
 			if (move.target === 'all' && !isSelf) {
 				hitResult = this.battle.singleEvent('TryHitField', moveData, {}, target || null, pokemon, move);
@@ -1799,7 +1809,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				if (!target || (target.fainted && !target.isAlly(this)) && this.battle.gameType !== 'freeforall') {
 					// If a targeted foe faints, the move is retargeted
 					const possibleTarget = this.battle.getRandomTarget(this, move);
-					if (!possibleTarget) return { targets: [], pressureTargets: [] };
+					if (!possibleTarget) return {targets: [], pressureTargets: []};
 					target = possibleTarget;
 				}
 				if (this.battle.activePerHalf > 1 && !move.tracksTarget) {
@@ -1820,7 +1830,7 @@ export const Scripts: ModdedBattleScriptsData = {
 					targets.push(target);
 				}
 				if (target.fainted && !move.flags['futuremove']) {
-					return { targets: [], pressureTargets: [] };
+					return {targets: [], pressureTargets: []};
 				}
 				if (selectedTarget !== target) {
 					this.battle.retargetLastMove(target);
@@ -1836,7 +1846,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				pressureTargets = this.foes();
 			}
 
-			return { targets, pressureTargets };
+			return {targets, pressureTargets};
 		},
 	},
 	side: {
@@ -1850,8 +1860,6 @@ export const Scripts: ModdedBattleScriptsData = {
 					let details = ``;
 					if (action.targetLoc && this.active.length > 1) details += ` ${action.targetLoc > 0 ? '+' : ''}${action.targetLoc}`;
 					if (action.mega) details += (action.pokemon!.item === 'ultranecroziumz' ? ` ultra` : ` mega`);
-					if (action.megax) details += ` megax`;
-					if (action.megay) details += ` megay`;
 					if (action.zmove) details += ` zmove`;
 					if (action.maxMove) details += ` dynamax`;
 					if (action.terastallize) details += ` terastallize`;
@@ -1859,8 +1867,10 @@ export const Scripts: ModdedBattleScriptsData = {
 				case 'switch':
 				case 'instaswitch':
 				case 'revivalblessing':
-				// @ts-expect-error custom status falls through
-				case 'scapegoat':
+				// @ts-ignore custom status falls through
+				case 'epipen':
+					return `switch ${action.target!.position + 1}`;
+				case 'mimic':
 					return `switch ${action.target!.position + 1}`;
 				case 'team':
 					return `team ${action.pokemon!.position + 1}`;
@@ -1939,13 +1949,26 @@ export const Scripts: ModdedBattleScriptsData = {
 				return this.emitChoiceError(`Can't switch: You can't switch to a fainted Pokémon`);
 			}
 
-			if (this.slotConditions[pokemon.position]['scapegoat']) {
+			if (this.slotConditions[pokemon.position]['epipen']) {
 				// Should always subtract, but stop at 0 to prevent errors.
 				this.choice.forcedSwitchesLeft = this.battle.clampIntRange(this.choice.forcedSwitchesLeft - 1, 0);
 				pokemon.switchFlag = false;
-				// @ts-expect-error custom request
+				// @ts-ignore custom request
 				this.choice.actions.push({
-					choice: 'scapegoat',
+					choice: 'epipen',
+					pokemon,
+					target: targetPokemon,
+				} as ChosenAction);
+				return true;
+			}
+
+			if (this.slotConditions[pokemon.position]['mimic']) {
+				// Should always subtract, but stop at 0 to prevent errors.
+				this.choice.forcedSwitchesLeft = this.battle.clampIntRange(this.choice.forcedSwitchesLeft - 1, 0);
+				pokemon.switchFlag = false;
+				// @ts-ignore custom request
+				this.choice.actions.push({
+					choice: 'mimic',
 					pokemon,
 					target: targetPokemon,
 				} as ChosenAction);
@@ -1954,7 +1977,7 @@ export const Scripts: ModdedBattleScriptsData = {
 
 			if (this.requestState === 'move') {
 				if (pokemon.trapped) {
-					return this.emitChoiceError(`Can't switch: The active Pokémon is trapped`, { pokemon, update: req => {
+					const includeRequest = this.updateRequestForPokemon(pokemon, req => {
 						let updated = false;
 						if (req.maybeTrapped) {
 							delete req.maybeTrapped;
@@ -1965,7 +1988,10 @@ export const Scripts: ModdedBattleScriptsData = {
 							updated = true;
 						}
 						return updated;
-					} });
+					});
+					const status = this.emitChoiceError(`Can't switch: The active Pokémon is trapped`, includeRequest);
+					if (includeRequest) this.emitRequest(this.activeRequest!);
+					return status;
 				} else if (pokemon.maybeTrapped) {
 					this.choice.cantUndo = this.choice.cantUndo || pokemon.isLastActive();
 				}
@@ -1996,18 +2022,19 @@ export const Scripts: ModdedBattleScriptsData = {
 			if (!action.side && action.pokemon) action.side = action.pokemon.side;
 			if (!action.move && action.moveid) action.move = this.battle.dex.getActiveMove(action.moveid);
 			if (!action.order) {
-				const orders: { [choice: string]: number } = {
+				const orders: {[choice: string]: number} = {
 					team: 1,
 					start: 2,
 					instaswitch: 3,
 					beforeTurn: 4,
 					beforeTurnMove: 5,
 					revivalblessing: 6,
-					scapegoat: 7,
+					epipen: 7,
+					mimic: 8,
 
 					runUnnerve: 100,
 					runSwitch: 101,
-					// runPrimal: 102,
+					runPrimal: 102,
 					switch: 103,
 					megaEvo: 104,
 					runDynamax: 105,
