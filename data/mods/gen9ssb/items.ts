@@ -58,20 +58,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 		itemUser: ["Arcanine"],
 		onTakeItem: false,
 	},
-	// Lyssa
-	ramen: {
-		name: "Ramen",
-		gen: 9,
-		desc: "At end of turn, holder's Speed is increased by 1 stage and restores 1/4 max HP. Single use.",
-		shortDesc: "+25% HP/+1 SPE at end of turn. Single use.",
-		onResidual(pokemon) {
-			pokemon.eatItem();
-		},
-		onEat(pokemon) {
-			this.heal(pokemon.baseMaxhp / 4);
-			this.boost({ spe: 1 });
-		},
-	},
 	// Gadget
 	everythingamajig: {
 		name: "Everythingamajig",
@@ -113,50 +99,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 				if (pokemon.item) pokemon.setItem('Everythingamajig');
 				pokemon.removeVolatile('everythingamajig');
 			},
-		},
-	},
-	// Mink
-	corpselily: {
-		name: "Corpse Lily",
-		gen: 9,
-		desc: "This Pokemon recovers 1/16 of its max HP at end of turn and an additional 1/16 of its max HP for each active Pokemon that is poisoned (other than the holder). If the holder is hit by a contact move, the attacker has a 30% chance to become poisoned. If held by a Venusaur-Mega with Transfuse Toxin, it can use Toxic Deluge.",
-		shortDesc: "+1/16 HP; +1/16 for each poisoned Pokemon; Contact: 30% PSN.",
-		zMove: "Toxic Deluge",
-		zMoveFrom: "Transfuse Toxin",
-		itemUser: ["Venusaur", "Venusaur-Mega"],
-		onTakeItem: false,
-		onResidual(pokemon) {
-			if (!pokemon || !pokemon.hp) return;
-			let totalPsn = 0;
-			for (const target of this.getAllActive()) {
-				if (!target.status || pokemon === target) continue;
-				if (target.status === 'psn' || target.status === 'tox') totalPsn++;
-			}
-			if (!totalPsn) {
-				this.heal(pokemon.baseMaxhp / 16);
-			} else if (totalPsn >= 1) {
-				this.heal((pokemon.baseMaxhp / 16) * totalPsn);
-			}
-		},
-	},
-	// Cinque
-	moogleplushie: {
-		name: "Moogle Plushie",
-		gen: 9,
-		shortDesc: "1.5x Atk/Def/SpDef; Allows use of Homerun Swing",
-		desc: "This Pokemon's Attack, Defense, and Special Defense are 1.5x. If held by a Marowak with Homerun Swing - Windup, it can use Homerun Swing.",
-		zMove: "Homerun Swing",
-		zMoveFrom: "Homerun Swing - Windup",
-		itemUser: ["Marowak"],
-		onTakeItem: false,
-		onModifyAtk(atk) {
-			return this.chainModify(1.5);
-		},
-		onModifyDef(def) {
-			return this.chainModify(1.5);
-		},
-		onModifySpD(spd) {
-			return this.chainModify(1.5);
 		},
 	},
 	// Marvin
@@ -310,18 +252,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 		},
 		onEat() { },
 	},
-	// Kusanali
-	seedofstoredknowledge: {
-		name: "Seed of Stored Knowledge",
-		gen: 9,
-		shortDesc: "Inflicts Akasha Seeds upon hitting a Pokemon with a Grass-type move.",
-		onAfterMoveSecondarySelf(source, target, move) {
-			if (source !== target && move.type === 'Grass') {
-				this.add('-activate', source, '[from] item: Seed of Stored Knowledge');
-				target.addVolatile('akashaseeds');
-			}
-		},
-	},
 	// Morax
 	hadeansoil: {
 		name: "Hadean Soil",
@@ -432,48 +362,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 		isChoice: true,
 		gen: 9,
 	},
-	// Jack
-	hagakure: {
-		name: "Hagakure",
-		gen: 9,
-		onStart(pokemon) {
-			if (pokemon.hp === pokemon.maxhp) {
-				if (!pokemon.abilityState.hagakure) {
-					this.add('-anim', pokemon, 'Mist', pokemon);
-					this.add('-message', `${pokemon.name}'s Hagakure activated!`);
-				}
-				pokemon.abilityState.hagakure = true;
-			} else {
-				pokemon.abilityState.hagakure = false;
-			}
-		},
-		onUpdate(pokemon) {
-			if (pokemon.hp === pokemon.maxhp) {
-				if (!pokemon.abilityState.hagakure) {
-					this.add('-anim', pokemon, 'Mist', pokemon);
-					this.add('-message', `${pokemon.name}'s Hagakure activated!`);
-				}
-				pokemon.abilityState.hagakure = true;
-			} else {
-				if (pokemon.abilityState.hagakure) {
-					this.add('-message', `${pokemon.name}'s Hagakure vanished!`);
-				}
-				pokemon.abilityState.hagakure = false;
-			}
-		},
-		onModifyAtk(atk, pokemon) {
-			if (pokemon.abilityState.hagakure) return this.chainModify(2);
-		},
-		onModifyDef(def, pokemon) {
-			if (pokemon.abilityState.hagakure) return this.chainModify(0.5);
-		},
-		onModifySpd(spd, pokemon) {
-			if (pokemon.abilityState.hagakure) return this.chainModify(0.5);
-		},
-		onModifyCritRatio(critRatio, user) {
-			if (user.abilityState.hagakure) return critRatio + 5;
-		},
-	},
 	// Journeyman
 	colossuscarrier: {
 		name: "Colossus Carrier",
@@ -501,29 +389,6 @@ export const Items: { [k: string]: ModdedItemData } = {
 			}
 		},
 		// Ability to carry multiple items handled in ../config/formats.ts
-	},
-	// Codie
-	evileyeoformsbygore: {
-		name: "Evil Eye of Orms-by-Gore",
-		gen: 9,
-		desc: "On switch-in, lowers the Attack of all active Pokemon by 1 stage, and restores HP equal to 50% of the total Attack lost. If holder is a Venomicon, turns Mind Reader into a 60 BP special move while retaining its secondary effects.",
-		shortDesc: "Switch-in: Heals, all Pokemon -1ATK; Mind Reader: 60BP.",
-		onSwitchIn(pokemon) {
-			let health = 0;
-			this.add('-anim', pokemon, 'Mean Look', pokemon);
-			for (const activePokemon of this.getAllActive()) {
-				health += activePokemon.storedStats.atk - (activePokemon.storedStats.atk * 0.67);
-				this.boost({ atk: -1 }, activePokemon);
-			}
-			this.heal(health, pokemon);
-		},
-		onModifyMovePriority: 1,
-		onModifyMove(move, pokemon) {
-			if (move.id === 'mindreader' && pokemon.species.name === 'Venomicon') {
-				move.category = 'Special';
-				move.basePower = 60;
-			}
-		},
 	},
 	// Sakuya Izayoi
 	stopwatch: {
@@ -787,35 +652,22 @@ export const Items: { [k: string]: ModdedItemData } = {
 			pokemon.addVolatile('magnetrise');
 			this.field.addPseudoWeather('iondeluge');
 		},
-		onModifyType(move, pokemon) {
-			if (move.id === 'technoblast') {
-				move.type = 'Steel';
-			}
-		},
-		onBasePowerPriority: 23,
-		onBasePower(basePower, pokemon, target, move) {
-			if (move.id === 'technoblast') return this.chainModify([5325, 4096]);
+		onModifyMove(move) {
+			if (move.id === 'paraboliccharge') move.drain = [3, 4];
+			if (move.id === 'technoblast') move.type = 'Steel';
+			if (move.id === 'technoblast' || move.id === 'energyball') move.basePower *= 1.3;
 		},
 		onResidual(pokemon) {
-			if (pokemon.species.id !== 'vikavolttotem') return;
-			if (pokemon.abilityState.gauges < 5) {
-				this.add('-activate', pokemon, 'item: Apparatus');
-				this.add('-message', `${pokemon.name} gained charge!`);
+			if (pokemon.abilityState.gauges >= 0 && pokemon.abilityState.gauges < 5) {
 				pokemon.abilityState.gauges += 1;
-				this.add('-message', `Battery Remaining: ${(pokemon.abilityState.gauges / 5) * 100}%`);
+				this.add('-anim', pokemon, 'Charge');
+				this.add(`raw|${pokemon.name} is gaining charge! <b>(${pokemon.abilityState.gauges}/5)</b>`);
 			}
-		},
-	},
-	// Morte
-	malediction: {
-		name: "Malediction",
-		gen: 9,
-		desc: "Whenever this Pokemon is damaged by an attacking move, the attacking Pokemon is inflicted with Torment.",
-		shortDesc: "If holder is damaged by an attack, uses Torment on attacker.",
-		onDamagingHitOrder: 2,
-		onDamagingHit(damage, target, source, move) {
-			this.add('-activate', target, 'item: Malediction', target);
-			source.addVolatile('torment');
+			if (pokemon.abilityState.gauges === 5) {
+				this.add('-anim', pokemon, 'Discharge');
+				this.add('-anim', pokemon, 'Celebrate');
+				this.add('-message', `${pokemon.name} is brimming with charge!`);
+			}
 		},
 	},
 	// Marisa Kirisame
@@ -940,12 +792,12 @@ export const Items: { [k: string]: ModdedItemData } = {
 	// Gizmo
 	inconspicuouscoin: {
 		name: "Inconspicuous Coin",
-		desc: "When the holder is hit by a damaging move: ~16% chance to do halved damage. When the holder uses a damaging move: 20% chance to do doubled damage. Chances roughly double for each charge this Pokemon has (~16%, ~33%, ~50% | 20%, 40%, 60%)",
+		desc: "Whenever the holder is attacked, it has a 20% chance to take 1/2 damage. Whenever the holder attacks, it has a 20% chance to deal 2x damage. Chances increase by an additional 20% per charge stored.",
 		shortDesc: "See '/ssb Gizmo' for more!",
 		gen: 9,
 		onSourceModifyDamage(damage, source, target, move) {
 			if (!target.abilityState.charges) target.abilityState.charges = 0;
-			const chance = 6 / (1 + target.abilityState.charges);
+			const chance = 5 / (1 + target.abilityState.charges);
 			if (this.randomChance(1, chance)) {
 				this.add('-message', `${target.name} defended itself with the Inconspicuous Coin!`);
 				return this.chainModify(0.5);
@@ -967,9 +819,20 @@ export const Items: { [k: string]: ModdedItemData } = {
 		gen: 9,
 		desc: "Serves no purpose. Gets slippery sometimes.",
 		onTryMove(pokemon, target, move) {
-			if (this.randomChance(1, 5)) {
-				this.add('-message', `Oops! ${pokemon.name} slipped on the Slag!`);
-				this.add('-message', `Why is he carrying slag?`);
+			if (this.randomChance(3, 10)) {
+
+				this.add('-message', `Whoops! ${pokemon.name} slipped on some Slag!`);
+				
+				let verb = "is"; let pronoun = "he";
+				switch (pokemon.gender) {
+					case "F":
+						pronoun = "she";
+						break;
+					case "N":
+						verb = "are"; pronoun = "they";
+						break;
+				}
+				this.add('-message', `Why ${verb} ${pronoun} carrying slag?`);
 				return null;
 			}
 		},

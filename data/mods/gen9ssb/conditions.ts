@@ -21,6 +21,12 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 	*/
 	// Please keep statuses organized alphabetically based on staff member name!
 
+	// Apply this to a Pokemon for a temporary Battle Armor effect.
+	// MUST BE MANUALLY SET AND REMOVED IN ALL CASES.
+	cannotBeCrit: {
+		name: "cannotBeCrit",
+		onCriticalHit: false,
+	},
 	// Trey
 	deltacharge: {
 		name: "Delta Charge",
@@ -44,20 +50,15 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 	deltadrop: {
 		name: "Delta Drop",
 		effectType: 'Condition',
-		duration: 3,
 		onSideStart(side, source) {
 			this.add('-sidestart', side, 'move: Grand Delta', '[silent]');
-			this.add('-message', `${side.active[0].name} and their allies' Defense and Special Defense sharply dropped!`);
+			this.add('-message', `${side.active[0].name} and their allies' defenses were permanently weakened!`);
 		},
 		onModifyDef(def, pokemon) {
 			return this.chainModify(0.5);
 		},
-		onModifySpd(spd, pokemon) {
+		onModifySpD(spd, pokemon) {
 			return this.chainModify(0.5);
-		},
-		onSideEnd(side) {
-			this.add('-sideend', side, 'move: Grand Delta', '[silent]');
-			this.add('-message', `${side.active[0].name} and their allies' Defense and Special Defense returned to normal!`);
 		},
 	},
 	// Kusanali
@@ -132,6 +133,7 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 			this.add('-message', `${pokemon.name}'s Blooper ink faded away!`);
 		},
 	},
+	/*
 	spinyshell: {
 		name: "Spiny Shell",
 		effectType: 'Condition',
@@ -205,6 +207,7 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 			}
 		},
 	},
+	*/
 	megamushroom: {
 		name: "Mega Mushroom",
 		duration: 3,
@@ -296,104 +299,6 @@ export const Conditions: { [k: string]: ModdedConditionData & { innateName?: str
 		},
 		onEnd(pokemon) {
 			pokemon.moveSlots[3] = this.effectState.oldMove;
-		},
-	},
-	// Morte
-	curseddoll: {
-		name: "Cursed Doll",
-		effectType: 'Condition',
-		duration: 3,
-		onSideStart(side, source) {
-			this.add('-sidestart', side, 'Cursed Doll');
-		},
-		onModifyDef(def, pokemon) {
-			return this.chainModify(0.7);
-		},
-		onModifySpd(spd, pokemon) {
-			return this.chainModify(0.7);
-		},
-		onResidual(pokemon) {
-			this.add('-anim', pokemon, 'Curse', pokemon);
-			this.add('-message', `${pokemon.name} is haunted by Cursed Doll!`);
-		},
-		onSideEnd(side) {
-			this.add('-sideend', side, 'Cursed Doll');
-		},
-	},
-	// Mink
-	acidrain: {
-		name: 'Acid Rain',
-		effectType: 'Weather',
-		duration: 5,
-		onWeatherModifyDamage(damage, attacker, defender, move) {
-			if (move.type === 'Poison') {
-				this.debug('Acid Rain poison buff');
-				return this.chainModify(1.33);
-			}
-		},
-		onFieldStart(battle, source, effect) {
-			this.add('-weather', 'Acid Rain');
-		},
-		onFieldResidualOrder: 1,
-		onFieldResidual() {
-			this.add('-weather', 'Acid Rain', '[upkeep]');
-			this.eachEvent('Weather');
-			for (const pokemon of this.getAllActive()) {
-				if (pokemon.species.id === 'venusaurmega') continue;
-				this.add('-anim', pokemon, 'Acid Downpour', pokemon);
-				pokemon.trySetStatus('psn', pokemon.side.foe.active[0], this.dex.conditions.get('Acid Rain'));
-			}
-			this.add('-message', 'Acid Rain fell from the sky!');
-		},
-		onFieldEnd() {
-			this.add('-message', `Acid Rain petered out!`);
-		},
-	},
-	willmiss: {
-		duration: 1,
-		onModifyMove(move, pokemon) {
-			move.accuracy = 0;
-		},
-	},
-	// Cyclommatic Cell Battery Display
-	// Uses empty volatile statuses as a visual effect
-	// pokemon.addVolatile('0%');
-	// pokemon.removeVolatile('0%');
-
-	'0%': {
-		name: "0%",
-		onStart(pokemon) {
-			this.add('-start', pokemon, '0%', '[silent]');
-		},
-	},
-	'20%': {
-		name: "20%",
-		onStart(pokemon) {
-			this.add('-start', pokemon, '20%', '[silent]');
-		},
-	},
-	'40%': {
-		name: "40%",
-		onStart(pokemon) {
-			this.add('-start', pokemon, '40%', '[silent]');
-		},
-	},
-	'60%': {
-		name: "60%",
-		onStart(pokemon) {
-			this.add('-start', pokemon, '60%', '[silent]');
-		},
-	},
-	'80%': {
-		name: "80%",
-		onStart(pokemon) {
-			this.add('-start', pokemon, '80%', '[silent]');
-		},
-	},
-	'100%': {
-		name: "100%",
-		onStart(pokemon) {
-			this.add('-start', pokemon, '100%', '[silent]');
 		},
 	},
 

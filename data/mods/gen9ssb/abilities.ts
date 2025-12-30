@@ -1458,7 +1458,7 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 		},
 		onBasePower(basePower, attacker, defender, move) {
 			if (move.category === 'Status') return;
-			if (!attacker.abilityState.gauges || attacker.abilityState.gauges === undefined) attacker.abilityState.gauges = 0;
+			if (!attacker.abilityState.gauges) attacker.abilityState.gauges = 0;
 			switch (attacker.abilityState.gauges) {
 				case 0:
 				case 1:
@@ -1493,22 +1493,24 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 			if (move.type === 'Electric') {
 				if (pokemon.abilityState.gauges < 2) {
 					this.debug("Not enough battery");
-					this.add('-message', `${pokemon.name} doesn't have enough battery!`);
+					this.add('-message', `${pokemon.name} doesn't have enough battery life to use ${move.name}!`);
+					this.add('-anim', pokemon, 'Tickle');
 					return false;
 				} else if (pokemon.abilityState.gauges >= 2) {
 					pokemon.abilityState.gauges -= 2;
-					this.add('-message', `${pokemon.name} used its battery to power up ${move.name}!`);
+					this.add('-message', `${pokemon.name} used 40% of its battery life!`);
 				}
 			}
 			// Use gauges for techno blast
 			if (move.id === 'technoblast') {
 				if (pokemon.abilityState.gauges < 3) {
 					this.debug("Not enough battery");
-					this.add('-message', `${pokemon.name} doesn't have enough battery!`);
+					this.add('-message', `${pokemon.name} doesn't have enough battery life to use ${move.name}!`);
+					this.add('-anim', pokemon, 'Tickle');
 					return false;
 				} else if (pokemon.abilityState.gauges >= 3) {
 					pokemon.abilityState.gauges -= 3;
-					this.add('-message', `${pokemon.name} used its battery to power up ${move.name}!`);
+					this.add('-message', `${pokemon.name} used 60% of its battery life!`);
 				}
 			}
 		},
@@ -1520,14 +1522,14 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 				this.field.setTerrain('electricterrain');
 				pokemon.addVolatile('mustrecharge');
 				// Charge if at maximum battery
-			} else if (pokemon.abilityState.gauges >= 5) {
+			} else if (pokemon.abilityState.gauges >= 5 && !pokemon.volatiles['charge']) {
 				this.add(`-anim`, pokemon, 'Charge', pokemon);
 				pokemon.addVolatile('charge');
-				this.add('-message', `${pokemon.name} is at maximum charge!`);
+				this.add('-message', `${pokemon.name} is brimming with charge!`);
 				// Otherwise state charge amount
 			} else {
 				this.add(`-anim`, pokemon, 'Charge', pokemon);
-				this.add('-message', `${pokemon.name} is at ${(pokemon.abilityState.gauges / 5) * 100}% battery!`);
+				this.add('-message', `${pokemon.name} is at ${(pokemon.abilityState.gauges / 5) * 100}% battery life!`);
 			}
 			// Add charge from sleep or terrain
 			let totalCharge = 0;
@@ -1538,10 +1540,10 @@ export const Abilities: { [k: string]: ModdedAbilityData } = {
 				pokemon.abilityState.gauges += totalCharge;
 				if (pokemon.abilityState.gauges > 5) pokemon.abilityState.gauges = 5;
 				if (totalCharge === 1) {
-					this.add('-message', `${pokemon.name} is charging up!`);
+					this.add('-message', `${pokemon.name} is charging its battery!`);
 				}
 				if (totalCharge > 1) {
-					this.add('-message', `${pokemon.name} is charging rapidly!`);
+					this.add('-message', `${pokemon.name} is charging up rapidly!`);
 				}
 			}
 		},

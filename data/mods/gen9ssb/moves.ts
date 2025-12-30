@@ -2,6 +2,7 @@ import { ssbSets } from "./random-teams";
 import { rbSets } from "../../random-battles/gen9/sets";
 import { PSEUDO_WEATHERS, changeSet, getName } from "./scripts";
 import { Teams } from "../../../sim/teams";
+import { Condition } from "../../../sim/dex-conditions";
 
 export const Moves: { [k: string]: ModdedMoveData } = {
 	/*
@@ -1735,17 +1736,26 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 			this.add('-anim', source, 'Agility', source);
 		},
 		onHit(pokemon) {
-			this.add('-message', `TROUBLESHOOTING: hp: ${pokemon.hp} maxhp: ${pokemon.maxhp}`);
-			this.add('-message', `FORMULA: ${pokemon.hp - 1} / ${pokemon.maxhp / 10}`);
-			pokemon.abilityState.stacks = Math.floor((pokemon.hp - 1) / (pokemon.maxhp / 10));
-			this.damage(pokemon.hp - 1, pokemon, pokemon, this.effect);
-			pokemon.addVolatile('turbocharge');
+
+			const loss = pokemon.hp - 1;
+			const max = pokemon.baseMaxhp / 10;
+
+			let stacks = Math.floor(loss/max)
+			if (stacks < 1) stacks = 1;
+			if (stacks > 9) stacks = 9;
+			pokemon.abilityState.stacks = stacks;
+
 			pokemon.addVolatile('protect');
-			this.add('-message', `Level ${pokemon.abilityState.stacks} Turbocharge!`);
-			pokemon.abilityState.permdis = true;
+			pokemon.addVolatile('turbocharge');
+			this.damage(loss, pokemon);
+			this.add('-message', `Level ${stacks} Turbocharge!`);
+			// Permanent disabling of Auto-Repair handled in ../config.ts
 		},
 		condition: {
 			duration: 9,
+			onStart() {
+				this.effectState.turnUsed = this.turn;
+			},
 			onModifyAtkPriority: 5,
 			onModifyAtk(atk, pokemon) {
 				if (pokemon.abilityState.stacks <= 0) return;
@@ -1768,7 +1778,10 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 				return false;
 			},
 			onResidual(pokemon) {
-				pokemon.abilityState.stacks--;
+				// Prevent charge from wearing off immediately after Turbocharge is used
+				// It should start at X stacks and should not begin to deplete until one
+				// full turn cycle has passed.
+				if (this.effectState.turnUsed !== this.turn) pokemon.abilityState.stacks--;
 				if (pokemon.abilityState.stacks <= 0) {
 					pokemon.abilityState.stacks = 0;
 					this.add('-message', `${pokemon.name}'s turbocharge wore off!`);
@@ -2277,65 +2290,38 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		type: "Electric",
 	},
 	// Cyclommatic Cell
-	galvanicweb: {
+	parabolicdischarge: {
 		accuracy: true,
-		basePower: 0,
-		category: "Status",
-		name: "Galvanic Web",
-		desc: "Sets Galvanic Web on the opposing side of the field. On switch-in, Pokemon get -1 Speed and are damaged based on their weakness/resistance vs Electric. Lasts 3 turns, then paralyzes the opposing active Pokemon upon ending.",
-		shortDesc: "Damages/Lowers Speed; Lasts 3 turns, then paralyzes.",
-		pp: 16,
-		noPPBoosts: true,
+		basePower: 150,
+		category: "Special",
+		name: "Parabolic Discharge",
+		desc: "Fails if Electric Terrain is not active. Ends Electric Terrain. Changes the user's ability to Electromorphosis.",
+		shortDesc: "Must be used in Electric Terrain; User gains Electromorphosis.",
+		pp: 5,
 		priority: 0,
 		flags: { protect: 1, reflectable: 1, mirror: 1, metronome: 1 },
 		onTryMove() {
 			this.attrLastMove('[still]');
 		},
 		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Ion Deluge', source);
-			this.add('-anim', source, 'Electroweb', target);
+			if (!this.field.isTerrain("electricterrain") ||
+			!source.abilityState.gauges) return null;
+
+			this.add('-anim', source, 'Parabolic Charge', source);
+			this.add('-anim', source, 'Electro Shot', target);
 		},
-		sideCondition: 'galvanicweb',
-		condition: {
-			duration: 3,
-			onSideStart(side) {
-				this.add('-sidestart', side, 'move: Galvanic Web');
-			},
-			onEntryHazard(pokemon) {
-				if (pokemon.hasItem('heavydutyboots')) return;
-				this.add('-activate', pokemon, 'move: Galvanic Web');
-				this.boost({ spe: -1 }, pokemon, pokemon.side.foe.active[pokemon.side.foe.active.length - 1 - pokemon.position], this.dex.getActiveMove('galvanicweb'));
-				switch (this.clampIntRange(pokemon.runEffectiveness(this.dex.getActiveMove('galvanicweb')), -6, 6)) {
-					case 2:
-						this.damage(pokemon.baseMaxhp / 2, pokemon);
-						break;
-					case 1:
-						this.damage(pokemon.baseMaxhp / 4, pokemon);
-						break;
-					case 0:
-						this.damage(pokemon.baseMaxhp / 8, pokemon);
-						break;
-					case -1:
-						this.damage(pokemon.baseMaxhp / 16, pokemon);
-						break;
-					case -2:
-						this.damage(pokemon.baseMaxhp / 32, pokemon);
-						break;
-				}
-			},
-			onResidual(pokemon) {
-				this.add('-anim', pokemon, 'Thunder Cage', pokemon);
-				this.add('-message', `Galvanic Web electrifies the battlefield!`);
-			},
-			onSideEnd(side) {
-				this.add('-sideend', side, 'move: Galvanic Web');
-				for (const pokemon of side.active) {
-					pokemon.trySetStatus('par');
-				}
-			},
+		onHit(source) {
+			source.abilityState.gauges = 0;
+			let newAbility = this.dex.abilities.get('electromorphosis');
+			const abilitySet = source.setAbility(newAbility);
+			if (abilitySet) {
+				this.add('-ability', source, source.getAbility().name, '[from] move: Parabolic Discharge', '[of] ' + source);
+				return;
+			}
+			return abilitySet as false | null;
 		},
 		secondary: null,
-		target: "foeSide",
+		target: "normal",
 		type: "Electric",
 	},
 	// Morte
@@ -2619,7 +2605,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 	// Kozuchi
 	weaponenhancement: {
 		accuracy: true,
-		basepower: 0,
+		basePower: 0,
 		category: "Status",
 		name: "Weapon Enhancement",
 		pp: 3,
@@ -2745,28 +2731,42 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		type: "Fire",
 	},
 	// Sariel
-	civilizationofmagic: {
-		accuracy: 100,
-		basePower: 95,
-		category: "Special",
-		desc: "Target's Special Attack is used in damage calculation.",
-		shortDesc: "Uses foe's SpA.",
-		name: "Civilization of Magic",
+	thehandsresisthim: {
+		accuracy: true,
+		basePower: 0,
+		category: "Status",
+		shortDesc: "See '/ssb Sariel' for more!",
+		desc: "Permanently inflicts Curse of the Hands on the opposing side. User faints. (Curse of the Hands: Affected side's Pokemon are prevented from healing in any form. Affected side's active Pokemon loses 1/16 max HP at the end of each turn.)",
+		name: "The Hands Resist Him",
 		gen: 9,
-		pp: 24,
+		pp: 1,
 		noPPBoosts: true,
 		priority: 0,
-		flags: { mirror: 1, protect: 1 },
+		flags: {},
 		onTryMove() {
 			this.attrLastMove('[still]');
 		},
 		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Dazzling Gleam', target);
+			this.add('-anim', source, 'Glare', target);
+			this.add('-anim', source, 'Night Shade', target);
+			this.add('-anim', target, 'Spectral Thief', target);
 		},
-		overrideOffensivePokemon: 'target',
+		onHit(target, source, move) {
+			target.side.addSideCondition('curseofthehands', source, move)
+		},
+		condition: {
+			onResidual(pokemon) {
+				this.add('-anim', pokemon, "Spectral Thief", pokemon);
+				this.damage(pokemon.maxhp / 16, pokemon);
+			},
+			onTryHeal(damage, target, source, effect) {
+				this.add('-message', `${target.name} `);
+				return false;
+			},
+		},
 		secondary: null,
 		target: "normal",
-		type: "Fairy",
+		type: "Dark",
 	},
 	// Mima
 	reincarnation: {
@@ -2831,6 +2831,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		desc: "Hits 3-5 times. Flings coin at target after use. 50% chance to gain +2 crit ratio and 1.25x evasion until switch/faint. Fails if not holding Inconspicuous Coin.",
 		shortDesc: "Hits 3-5(+1) times. 50%: +2 Crit/1.25x EVA. -Inconspicuous Coin: Fails.",
 		pp: 5,
+		priority: 0,
 		flags: { contact: 1 },
 		onTryMove(pokemon, target, move) {
 			this.attrLastMove('[still]');
@@ -3248,7 +3249,7 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		gen: 9,
 		pp: 1,
 		noPPBoosts: true,
-		priority: 1,
+		priority: 6,
 		isZ: "yoichisbow",
 		onTryMove(attacker, defender, move) {
 			if (attacker.removeVolatile(move.id)) {
@@ -3285,8 +3286,8 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 		accuracy: true,
 		basePower: 50,
 		category: "Physical",
-		desc: "This move will connect one turn later.",
-		shortDesc: "Lands 1 turn after.",
+		desc: "Hits the next turn after being used.",
+		shortDesc: "Hits next turn.",
 		name: "Dynamite Arrow",
 		gen: 9,
 		pp: 40,
@@ -3300,12 +3301,15 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 				this.add('-sidestart', targetSide, 'Dynamite Arrow', '[silent]');
 			},
 			onSideEnd(targetSide) {
-				let source;
-				const pokemon = targetSide.active[0];
+				let source; let pokemon = targetSide.active[0];
+
 				if (pokemon.fainted || !pokemon.hp) {
 					this.add('-sideend', targetSide, 'Dynamite Arrow', '[silent]');
 					return;
 				}
+				
+				pokemon.addVolatile('cannotBeCrit');
+				
 				this.add('-anim', pokemon, 'Thousand Arrows', pokemon);
 				let possibleSources = pokemon.side.foe.pokemon.filter(ally => ally.name === 'Trey' || ally.ability === 'concentration');
 				if (!possibleSources || !possibleSources.length) {
@@ -3313,11 +3317,15 @@ export const Moves: { [k: string]: ModdedMoveData } = {
 				} else {
 					source = possibleSources[0];
 				}
+
 				const move = this.dex.getActiveMove('dynamitearrow');
 				// @ts-ignore
 				const dmg = this.actions.getDamage(source, pokemon, move);
+				// @ts-ignore
 				this.damage(dmg, pokemon);
-				this.boost({ def: -1, spe: -1 }, pokemon);
+				this.boost({ spe: -1 }, pokemon);
+
+				pokemon.removeVolatile('cannotBeCrit');
 				this.add('-sideend', targetSide, 'Dynamite Arrow', '[silent]');
 			},
 		},

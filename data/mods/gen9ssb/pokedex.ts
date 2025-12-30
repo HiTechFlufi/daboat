@@ -6,26 +6,19 @@ export const Pokedex: { [k: string]: ModdedSpeciesData } = {
 		baseStats: {hp: 100, atk: 100, def: 100, spa: 100, spd: 100, spe: 100}, // the base stats for the pokemon
 	},
 	*/
+	calyrex: {
+		inherit: true,
+		types: ['Grass', 'Steel'],
+		abilities: { 0: "Temporal Domain" },
+	},
 	skuntank: {
 		inherit: true,
 		abilities: { 0: "Venom Shock" },
-	},
-	arcanine: {
-		inherit: true,
-		abilities: { 0: "Adaptive Fighter" },
 	},
 	darmanitangalarzen: {
 		inherit: true,
 		abilities: { 0: "Murderous Mimic" },
 		baseStats: { hp: 115, atk: 120, def: 85, spa: 30, spd: 65, spe: 108 },
-	},
-	trevenant: {
-		inherit: true,
-		abilities: { 0: "Horrors of the Forest" },
-	},
-	zygarde10: {
-		inherit: true,
-		baseStats: { hp: 59, atk: 100, def: 81, spa: 61, spd: 95, spe: 115 },
 	},
 	ogerpon: {
 		inherit: true,
@@ -61,16 +54,6 @@ export const Pokedex: { [k: string]: ModdedSpeciesData } = {
 	zapdos: {
 		inherit: true,
 		abilities: { 0: "Peal of Thunder" },
-	},
-	mimikyu: {
-		inherit: true,
-		baseStats: { hp: 75, atk: 90, def: 80, spa: 105, spd: 105, spe: 96 },
-		abilities: { 0: "Dollkeeper" },
-	},
-	mimikyubusted: {
-		inherit: true,
-		baseStats: { hp: 75, atk: 90, def: 105, spa: 50, spd: 105, spe: 96 },
-		abilities: { 0: "Dollkeeper" },
 	},
 	kecleon: {
 		inherit: true,
@@ -111,11 +94,11 @@ export const Pokedex: { [k: string]: ModdedSpeciesData } = {
 	},
 	yveltal: {
 		inherit: true,
-		types: ['Dark', 'Fairy'],
-		abilities: { 0: "Angel of Death" },
+		abilities: { 0: "Now, Until You Die" },
 	},
 	vikavolt: {
 		inherit: true,
+		types: ['Electric', 'Steel'],
 		abilities: { 0: "Battery Life" },
 	},
 	decidueyehisui: {
